@@ -31,7 +31,7 @@ pest()->extend(TestCase::class)
 |
 */
 
-if ((new Process(['git', 'rev-parse', '--verify', '--quiet', 'HEAD'], dirname(__DIR__)))->run() === 0) {
+if (new Process(['git', 'rev-parse', '--verify', '--quiet', 'HEAD'], dirname(__DIR__))->run() === 0) {
     pest()->tia()
         ->locally()
         ->defaultBranch('main');
