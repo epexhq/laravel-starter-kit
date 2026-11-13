@@ -1,6 +1,7 @@
 <?php
 
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Symfony\Component\Process\Process;
 use Tests\TestCase;
 
 /*
@@ -20,6 +21,24 @@ pest()->extend(TestCase::class)
 
 /*
 |--------------------------------------------------------------------------
+| Test Impact Analysis
+|--------------------------------------------------------------------------
+|
+| On local machines Pest only re-runs the tests affected by your changes and replays the
+| rest from cache (requires PCOV or Xdebug). On CI, or with "--ci", the full suite runs.
+| Use "--no-tia" to force a full local run, or "--tia --fresh" to re-record the graph.
+| TIA needs a git repository with at least one commit, so it stays off until then.
+|
+*/
+
+if ((new Process(['git', 'rev-parse', '--verify', '--quiet', 'HEAD'], dirname(__DIR__)))->run() === 0) {
+    pest()->tia()
+        ->locally()
+        ->defaultBranch('main');
+}
+
+/*
+|--------------------------------------------------------------------------
 | Expectations
 |--------------------------------------------------------------------------
 |
@@ -29,9 +48,7 @@ pest()->extend(TestCase::class)
 |
 */
 
-expect()->extend('toBeOne', function () {
-    return $this->toBe(1);
-});
+expect()->extend('toBeOne', fn () => $this->toBe(1));
 
 /*
 |--------------------------------------------------------------------------
@@ -44,7 +61,7 @@ expect()->extend('toBeOne', function () {
 |
 */
 
-function something()
+function something(): void
 {
     // ..
 }

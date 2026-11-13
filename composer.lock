@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "30bbf64eb66f63d71a59b438a50db96f",
+    "content-hash": "c5bf8068f84dfdddc17a8cb1a3dd4e11",
     "packages": [
         {
             "name": "bacon/bacon-qr-code",
@@ -1581,6 +1581,101 @@
             },
             "time": "2026-11-10T15:54:30+00:00",
             "published-time": "2026-11-10T15:55:04+00:00"
+        },
+        {
+            "name": "laravel/nightwatch",
+            "version": "v1.30.6",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/laravel/nightwatch.git",
+                "reference": "33000668ae9407d204d5033f39cdfe14de4ac161"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/laravel/nightwatch/zipball/33000668ae9407d204d5033f39cdfe14de4ac161",
+                "reference": "33000668ae9407d204d5033f39cdfe14de4ac161",
+                "shasum": ""
+            },
+            "require": {
+                "ext-zlib": "*",
+                "guzzlehttp/promises": "^2.0|^3.0",
+                "laravel/framework": "^10.0|^11.0|^12.0|^13.0",
+                "monolog/monolog": "^3.6",
+                "nesbot/carbon": "^2.0|^3.0",
+                "php": "^8.2",
+                "psr/http-message": "^1.0|^2.0",
+                "psr/log": "^1.0|^2.0|^3.0",
+                "ramsey/uuid": "^4.0",
+                "symfony/console": "^6.0|^7.0|^8.0",
+                "symfony/http-foundation": "^6.0|^7.0|^8.0",
+                "symfony/polyfill-php84": "^1.29"
+            },
+            "require-dev": {
+                "aws/aws-sdk-php": "^3.349",
+                "ext-pcntl": "*",
+                "ext-pdo": "*",
+                "guzzlehttp/guzzle": "^7.0|^8.0",
+                "guzzlehttp/psr7": "^2.0|^3.0",
+                "laravel/horizon": "^5.4",
+                "laravel/pint": "1.21.0",
+                "laravel/vapor-core": "^2.38.2",
+                "livewire/livewire": "^2.0|^3.0",
+                "mockery/mockery": "^1.0",
+                "mongodb/laravel-mongodb": "^4.0|^5.0",
+                "orchestra/testbench": "^8.0|^9.0|^10.0|^11.0",
+                "orchestra/testbench-core": "^8.0|^9.0|^10.0|^11.0",
+                "orchestra/workbench": "^8.0|^9.0|^10.0|^11.0",
+                "phpstan/phpstan": "^1.0",
+                "phpunit/phpunit": "^10.0|^11.0|^12.0",
+                "singlestoredb/singlestoredb-laravel": "^1.0|^2.0",
+                "spatie/laravel-ignition": "^2.0",
+                "symfony/mailer": "^6.0|^7.0|^8.0",
+                "symfony/mime": "^6.0|^7.0|^8.0",
+                "symfony/var-dumper": "^6.0|^7.0|^8.0"
+            },
+            "type": "library",
+            "extra": {
+                "laravel": {
+                    "aliases": {
+                        "Nightwatch": "Laravel\\Nightwatch\\Facades\\Nightwatch"
+                    },
+                    "providers": [
+                        "Laravel\\Nightwatch\\NightwatchServiceProvider"
+                    ]
+                }
+            },
+            "autoload": {
+                "files": [
+                    "agent/helpers.php"
+                ],
+                "psr-4": {
+                    "Laravel\\Nightwatch\\": "src/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Taylor Otwell",
+                    "email": "taylor@laravel.com"
+                }
+            ],
+            "description": "The official Laravel Nightwatch package.",
+            "homepage": "https://nightwatch.laravel.com",
+            "keywords": [
+                "Insights",
+                "laravel",
+                "monitoring"
+            ],
+            "support": {
+                "docs": "https://nightwatch.laravel.com/docs",
+                "issues": "https://github.com/laravel/nightwatch/issues",
+                "source": "https://github.com/laravel/nightwatch"
+            },
+            "time": "2026-10-27T00:46:16+00:00",
+            "published-time": "2026-10-27T00:46:21+00:00"
         },
         {
             "name": "laravel/passkeys",
@@ -4228,6 +4323,66 @@
             },
             "time": "2026-09-16T11:39:30+00:00",
             "published-time": "2026-09-16T11:41:15+00:00"
+        },
+        {
+            "name": "resend/resend-php",
+            "version": "v1.18.0",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/resend/resend-php.git",
+                "reference": "f615aaa9bde31a0235dd2f9856cbbea63bf14ac9"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/resend/resend-php/zipball/f615aaa9bde31a0235dd2f9856cbbea63bf14ac9",
+                "reference": "f615aaa9bde31a0235dd2f9856cbbea63bf14ac9",
+                "shasum": ""
+            },
+            "require": {
+                "guzzlehttp/guzzle": "^7.8.2 || ^8.0",
+                "guzzlehttp/psr7": "^2.6.3 || ^3.0",
+                "php": "^8.1.0",
+                "psr/http-client": "^1.0"
+            },
+            "require-dev": {
+                "friendsofphp/php-cs-fixer": "^3.13",
+                "mockery/mockery": "^1.6",
+                "pestphp/pest": "^1.0|^2.0|^3.0|^4.0|^5.0"
+            },
+            "type": "library",
+            "autoload": {
+                "files": [
+                    "src/Resend.php"
+                ],
+                "psr-4": {
+                    "Resend\\": "src/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Resend and contributors",
+                    "homepage": "https://github.com/resend/resend-php/contributors"
+                }
+            ],
+            "description": "Resend PHP library.",
+            "homepage": "https://resend.com/",
+            "keywords": [
+                "api",
+                "client",
+                "php",
+                "resend",
+                "sdk"
+            ],
+            "support": {
+                "issues": "https://github.com/resend/resend-php/issues",
+                "source": "https://github.com/resend/resend-php/tree/v1.18.0"
+            },
+            "time": "2026-11-02T05:00:42+00:00",
+            "published-time": "2026-11-02T05:03:19+00:00"
         },
         {
             "name": "spomky-labs/cbor-php",
@@ -7970,17 +8125,166 @@
     ],
     "packages-dev": [
         {
-            "name": "brianium/paratest",
-            "version": "v7.28.0",
+            "name": "barryvdh/laravel-ide-helper",
+            "version": "v3.8.0",
             "source": {
                 "type": "git",
-                "url": "https://github.com/paratestphp/paratest.git",
-                "reference": "cac9f8cd1a5904c7584f82804b2a2d7f0c25d9b8"
+                "url": "https://github.com/barryvdh/laravel-ide-helper.git",
+                "reference": "f9521af2a0ed5ff1d70386cac3fae547a96be947"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/paratestphp/paratest/zipball/cac9f8cd1a5904c7584f82804b2a2d7f0c25d9b8",
-                "reference": "cac9f8cd1a5904c7584f82804b2a2d7f0c25d9b8",
+                "url": "https://api.github.com/repos/barryvdh/laravel-ide-helper/zipball/f9521af2a0ed5ff1d70386cac3fae547a96be947",
+                "reference": "f9521af2a0ed5ff1d70386cac3fae547a96be947",
+                "shasum": ""
+            },
+            "require": {
+                "barryvdh/reflection-docblock": "^2.4",
+                "composer/class-map-generator": "^1.0",
+                "ext-json": "*",
+                "illuminate/console": "^11.15 || ^12 || ^13.0",
+                "illuminate/database": "^11.15 || ^12 || ^13.0",
+                "illuminate/filesystem": "^11.15 || ^12 || ^13.0",
+                "illuminate/support": "^11.15 || ^12 || ^13.0",
+                "php": "^8.2"
+            },
+            "require-dev": {
+                "ext-pdo_sqlite": "*",
+                "friendsofphp/php-cs-fixer": "^3",
+                "illuminate/config": "^11.15 || ^12 || ^13.0",
+                "illuminate/view": "^11.15 || ^12 || ^13.0",
+                "larastan/larastan": "^3.1",
+                "mockery/mockery": "^1.4",
+                "orchestra/testbench": "^9.2 || ^10 || ^11.0",
+                "phpstan/phpstan-phpunit": "^2.0",
+                "phpunit/phpunit": "^10.5 || ^11.5.3 || ^12.5.12",
+                "spatie/phpunit-snapshot-assertions": "^4 || ^5",
+                "vlucas/phpdotenv": "^5"
+            },
+            "suggest": {
+                "illuminate/events": "Required for automatic helper generation (^6|^7|^8|^9|^10|^11)."
+            },
+            "type": "library",
+            "extra": {
+                "laravel": {
+                    "providers": [
+                        "Barryvdh\\LaravelIdeHelper\\IdeHelperServiceProvider"
+                    ]
+                },
+                "branch-alias": {
+                    "dev-master": "3.7-dev"
+                }
+            },
+            "autoload": {
+                "psr-4": {
+                    "Barryvdh\\LaravelIdeHelper\\": "src"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Barry vd. Heuvel",
+                    "email": "barryvdh@gmail.com"
+                }
+            ],
+            "description": "Laravel IDE Helper, generates correct PHPDocs for all Facade classes, to improve auto-completion.",
+            "keywords": [
+                "autocomplete",
+                "codeintel",
+                "dev",
+                "helper",
+                "ide",
+                "laravel",
+                "netbeans",
+                "phpdoc",
+                "phpstorm",
+                "sublime"
+            ],
+            "support": {
+                "issues": "https://github.com/barryvdh/laravel-ide-helper/issues",
+                "source": "https://github.com/barryvdh/laravel-ide-helper/tree/v3.8.0"
+            },
+            "funding": [
+                {
+                    "url": "https://fruitcake.nl",
+                    "type": "custom"
+                },
+                {
+                    "url": "https://github.com/barryvdh",
+                    "type": "github"
+                }
+            ],
+            "time": "2026-09-15T12:58:37+00:00",
+            "published-time": "2026-11-03T09:20:57+00:00"
+        },
+        {
+            "name": "barryvdh/reflection-docblock",
+            "version": "v2.4.1",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/barryvdh/ReflectionDocBlock.git",
+                "reference": "4f5ba70c30c81f2ce03a16a9965832cfcc31ed3b"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/barryvdh/ReflectionDocBlock/zipball/4f5ba70c30c81f2ce03a16a9965832cfcc31ed3b",
+                "reference": "4f5ba70c30c81f2ce03a16a9965832cfcc31ed3b",
+                "shasum": ""
+            },
+            "require": {
+                "php": ">=7.1"
+            },
+            "require-dev": {
+                "phpunit/phpunit": "^8.5.14|^9"
+            },
+            "suggest": {
+                "dflydev/markdown": "~1.0",
+                "erusev/parsedown": "~1.0"
+            },
+            "type": "library",
+            "extra": {
+                "branch-alias": {
+                    "dev-master": "2.3.x-dev"
+                }
+            },
+            "autoload": {
+                "psr-0": {
+                    "Barryvdh": [
+                        "src/"
+                    ]
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Mike van Riel",
+                    "email": "mike.vanriel@naenius.com"
+                }
+            ],
+            "support": {
+                "source": "https://github.com/barryvdh/ReflectionDocBlock/tree/v2.4.1"
+            },
+            "time": "2026-03-05T20:09:01+00:00",
+            "published-time": "2026-03-05T20:11:00+00:00"
+        },
+        {
+            "name": "brianium/paratest",
+            "version": "v7.27.5",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/paratestphp/paratest.git",
+                "reference": "fe4a1fd811fd79ead7476fa109c5f4ed721cc18a"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/paratestphp/paratest/zipball/fe4a1fd811fd79ead7476fa109c5f4ed721cc18a",
+                "reference": "fe4a1fd811fd79ead7476fa109c5f4ed721cc18a",
                 "shasum": ""
             },
             "require": {
@@ -7991,10 +8295,10 @@
                 "fidry/cpu-core-counter": "^1.4.1",
                 "jean85/pretty-package-versions": "^2.1.1",
                 "php": "~8.4.0 || ~8.5.0 || ~8.6.0",
-                "phpunit/php-code-coverage": "^14.5.0",
+                "phpunit/php-code-coverage": "^14.4.1",
                 "phpunit/php-file-iterator": "^7.0.2",
                 "phpunit/php-timer": "^9",
-                "phpunit/phpunit": "^13.4.5",
+                "phpunit/phpunit": "^13.4.3",
                 "sebastian/environment": "^9.3.3",
                 "symfony/console": "^7.4.20 || ^8.1.8",
                 "symfony/process": "^7.4.19 || ^8.1.7"
@@ -8004,7 +8308,7 @@
                 "ext-pcntl": "*",
                 "ext-pcov": "*",
                 "ext-posix": "*",
-                "phpstan/phpstan": "^2.3.4",
+                "phpstan/phpstan": "^2.3.2",
                 "phpstan/phpstan-deprecation-rules": "^2.0.5",
                 "phpstan/phpstan-phpunit": "^2.1.1",
                 "phpstan/phpstan-strict-rules": "^2.1.0",
@@ -8048,7 +8352,7 @@
             ],
             "support": {
                 "issues": "https://github.com/paratestphp/paratest/issues",
-                "source": "https://github.com/paratestphp/paratest/tree/v7.28.0"
+                "source": "https://github.com/paratestphp/paratest/tree/v7.27.5"
             },
             "funding": [
                 {
@@ -8060,8 +8364,225 @@
                     "type": "paypal"
                 }
             ],
-            "time": "2026-11-12T20:28:34+00:00",
-            "published-time": "2026-11-12T20:31:18+00:00"
+            "time": "2026-10-29T13:58:46+00:00",
+            "published-time": "2026-10-29T13:59:18+00:00"
+        },
+        {
+            "name": "composer/class-map-generator",
+            "version": "1.9.0",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/composer/class-map-generator.git",
+                "reference": "5fa48e0e1992ea8a786df3ceca80625c9a643b75"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/composer/class-map-generator/zipball/5fa48e0e1992ea8a786df3ceca80625c9a643b75",
+                "reference": "5fa48e0e1992ea8a786df3ceca80625c9a643b75",
+                "shasum": ""
+            },
+            "require": {
+                "composer/pcre": "^2.1 || ^3.1",
+                "php": "^7.2 || ^8.0",
+                "symfony/finder": "^4.4 || ^5.3 || ^6 || ^7 || ^8"
+            },
+            "require-dev": {
+                "phpstan/phpstan": "^1.12 || ^2",
+                "phpstan/phpstan-deprecation-rules": "^1 || ^2",
+                "phpstan/phpstan-phpunit": "^1 || ^2",
+                "phpstan/phpstan-strict-rules": "^1.1 || ^2",
+                "phpunit/phpunit": "^8",
+                "symfony/filesystem": "^5.4 || ^6 || ^7 || ^8"
+            },
+            "type": "library",
+            "extra": {
+                "branch-alias": {
+                    "dev-main": "1.x-dev"
+                }
+            },
+            "autoload": {
+                "psr-4": {
+                    "Composer\\ClassMapGenerator\\": "src"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Jordi Boggiano",
+                    "email": "j.boggiano@seld.be",
+                    "homepage": "https://seld.be"
+                }
+            ],
+            "description": "Utilities to scan PHP code and generate class maps.",
+            "keywords": [
+                "classmap"
+            ],
+            "support": {
+                "issues": "https://github.com/composer/class-map-generator/issues",
+                "source": "https://github.com/composer/class-map-generator/tree/1.9.0"
+            },
+            "funding": [
+                {
+                    "url": "https://packagist.com",
+                    "type": "custom"
+                },
+                {
+                    "url": "https://github.com/composer",
+                    "type": "github"
+                }
+            ],
+            "time": "2026-11-03T10:10:19+00:00",
+            "published-time": "2026-11-03T10:12:49+00:00"
+        },
+        {
+            "name": "composer/pcre",
+            "version": "3.4.0",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/composer/pcre.git",
+                "reference": "d5a341b3fb61f3001970940afb1d332968a183ed"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/composer/pcre/zipball/d5a341b3fb61f3001970940afb1d332968a183ed",
+                "reference": "d5a341b3fb61f3001970940afb1d332968a183ed",
+                "shasum": ""
+            },
+            "require": {
+                "php": "^7.4 || ^8.0"
+            },
+            "conflict": {
+                "phpstan/phpstan": "<2.2.2"
+            },
+            "require-dev": {
+                "phpstan/phpstan": "^2",
+                "phpstan/phpstan-deprecation-rules": "^2",
+                "phpstan/phpstan-strict-rules": "^2",
+                "phpunit/phpunit": "^9"
+            },
+            "type": "library",
+            "extra": {
+                "phpstan": {
+                    "includes": [
+                        "extension.neon"
+                    ]
+                },
+                "branch-alias": {
+                    "dev-main": "3.x-dev"
+                }
+            },
+            "autoload": {
+                "psr-4": {
+                    "Composer\\Pcre\\": "src"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Jordi Boggiano",
+                    "email": "j.boggiano@seld.be",
+                    "homepage": "http://seld.be"
+                }
+            ],
+            "description": "PCRE wrapping library that offers type-safe preg_* replacements.",
+            "keywords": [
+                "PCRE",
+                "preg",
+                "regex",
+                "regular expression"
+            ],
+            "support": {
+                "issues": "https://github.com/composer/pcre/issues",
+                "source": "https://github.com/composer/pcre/tree/3.4.0"
+            },
+            "funding": [
+                {
+                    "url": "https://packagist.com",
+                    "type": "custom"
+                },
+                {
+                    "url": "https://github.com/composer",
+                    "type": "github"
+                }
+            ],
+            "time": "2026-06-07T11:47:49+00:00",
+            "published-time": "2026-06-11T12:12:37+00:00"
+        },
+        {
+            "name": "driftingly/rector-laravel",
+            "version": "2.7.3",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/driftingly/rector-laravel.git",
+                "reference": "699f25bda7efcbe98cf8ff9c9e687da76ce0d8c5"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/driftingly/rector-laravel/zipball/699f25bda7efcbe98cf8ff9c9e687da76ce0d8c5",
+                "reference": "699f25bda7efcbe98cf8ff9c9e687da76ce0d8c5",
+                "shasum": ""
+            },
+            "require": {
+                "php": ">=8.3",
+                "rector/rector": "^2.8",
+                "symplify/rule-doc-generator-contracts": "^11.2",
+                "webmozart/assert": "^1.11 || ^2.0"
+            },
+            "require-dev": {
+                "boundwize/structarmed": "^0.19",
+                "illuminate/support": "^13.0",
+                "nette/utils": "^4.0",
+                "nikic/php-parser": "^5.6",
+                "phpstan/extension-installer": "^1.3",
+                "phpstan/phpstan": "^2.2",
+                "phpstan/phpstan-deprecation-rules": "^2.0",
+                "phpstan/phpstan-strict-rules": "^2.0",
+                "phpstan/phpstan-webmozart-assert": "^2.0",
+                "phpunit/phpunit": "^10.5",
+                "symplify/rule-doc-generator": "^12.2",
+                "tightenco/duster": "^3.1",
+                "tracy/tracy": "^2.10"
+            },
+            "suggest": {
+                "illuminate/support": "Required by RelationTableStringToPivotClassRector, which uses Illuminate\\Support\\Str at runtime to resolve pivot models from table names (^8.0 || ^9.0 || ^10.0 || ^11.0 || ^12.0 || ^13.0)."
+            },
+            "type": "rector-extension",
+            "extra": {
+                "rector": {
+                    "includes": [
+                        "config/config.php"
+                    ]
+                }
+            },
+            "autoload": {
+                "psr-4": {
+                    "RectorLaravel\\": "src"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "description": "Rector upgrades rules for Laravel Framework",
+            "keywords": [
+                "dev",
+                "laravel",
+                "rector",
+                "refactoring",
+                "upgrade"
+            ],
+            "support": {
+                "issues": "https://github.com/driftingly/rector-laravel/issues",
+                "source": "https://github.com/driftingly/rector-laravel/tree/2.7.3"
+            },
+            "time": "2026-10-27T12:37:16+00:00",
+            "published-time": "2026-10-27T12:41:55+00:00"
         },
         {
             "name": "fakerphp/faker",
@@ -9384,79 +9905,6 @@
             "published-time": "2026-07-28T14:33:47+00:00"
         },
         {
-            "name": "pestphp/pest-plugin-drift",
-            "version": "v5.0.0",
-            "source": {
-                "type": "git",
-                "url": "https://github.com/pestphp/pest-plugin-drift.git",
-                "reference": "1b544c770710f6fefe98446a7048a28e65b2ddd5"
-            },
-            "dist": {
-                "type": "zip",
-                "url": "https://api.github.com/repos/pestphp/pest-plugin-drift/zipball/1b544c770710f6fefe98446a7048a28e65b2ddd5",
-                "reference": "1b544c770710f6fefe98446a7048a28e65b2ddd5",
-                "shasum": ""
-            },
-            "require": {
-                "nikic/php-parser": "^5.8.0",
-                "pestphp/pest": "^5.0.0",
-                "php": "^8.4",
-                "symfony/finder": "^8.1.1"
-            },
-            "conflict": {
-                "pestphp/pest": "<5.0.0"
-            },
-            "require-dev": {
-                "pestphp/pest-dev-tools": "^5.0.0"
-            },
-            "type": "library",
-            "extra": {
-                "pest": {
-                    "plugins": [
-                        "Pest\\Drift\\Plugin"
-                    ]
-                }
-            },
-            "autoload": {
-                "psr-4": {
-                    "Pest\\Drift\\": "src/"
-                }
-            },
-            "notification-url": "https://packagist.org/downloads/",
-            "license": [
-                "MIT"
-            ],
-            "description": "The Pest Drift Plugin",
-            "keywords": [
-                "framework",
-                "laravel",
-                "pest",
-                "php",
-                "test",
-                "testing",
-                "unit"
-            ],
-            "support": {
-                "source": "https://github.com/pestphp/pest-plugin-drift/tree/v5.0.0"
-            },
-            "funding": [
-                {
-                    "url": "https://www.paypal.com/paypalme/enunomaduro",
-                    "type": "custom"
-                },
-                {
-                    "url": "https://github.com/mandisma",
-                    "type": "github"
-                },
-                {
-                    "url": "https://github.com/nunomaduro",
-                    "type": "github"
-                }
-            ],
-            "time": "2026-07-21T07:48:55+00:00",
-            "published-time": "2026-07-28T14:33:55+00:00"
-        },
-        {
             "name": "pestphp/pest-plugin-laravel",
             "version": "v5.0.1",
             "source": {
@@ -9675,6 +10123,90 @@
             },
             "time": "2026-10-07T19:41:52+00:00",
             "published-time": "2026-10-07T19:42:16+00:00"
+        },
+        {
+            "name": "pestphp/pest-plugin-rector",
+            "version": "v5.0.6",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/pestphp/pest-plugin-rector.git",
+                "reference": "5febaceaa0ba035f0d9476f0e9b700a9f394e611"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/pestphp/pest-plugin-rector/zipball/5febaceaa0ba035f0d9476f0e9b700a9f394e611",
+                "reference": "5febaceaa0ba035f0d9476f0e9b700a9f394e611",
+                "shasum": ""
+            },
+            "require": {
+                "nikic/php-parser": "^5.9",
+                "php": "^8.4",
+                "rector/rector": "^2.6.1"
+            },
+            "conflict": {
+                "pestphp/pest": "<5.0.0"
+            },
+            "require-dev": {
+                "laravel/pao": "^1.1.3",
+                "laravel/pint": "^1.30.3",
+                "pestphp/pest": "^5.0.3",
+                "pestphp/pest-plugin-phpstan": "^5.0",
+                "phpstan/phpstan": "^2.2.7"
+            },
+            "type": "library",
+            "autoload": {
+                "psr-4": {
+                    "Pest\\Rector\\": "src/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Punyapal Shah",
+                    "email": "mrpunyapal@gmail.com"
+                },
+                {
+                    "name": "Nuno Maduro",
+                    "email": "enunomaduro@gmail.com"
+                }
+            ],
+            "description": "Rector plugin for Pest",
+            "keywords": [
+                "framework",
+                "pest",
+                "php",
+                "plugin",
+                "rector",
+                "test",
+                "testing",
+                "unit"
+            ],
+            "support": {
+                "source": "https://github.com/pestphp/pest-plugin-rector/tree/v5.0.6"
+            },
+            "funding": [
+                {
+                    "url": "https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=66BYDWAT92N6L",
+                    "type": "custom"
+                },
+                {
+                    "url": "https://github.com/mrpunyapal",
+                    "type": "github"
+                },
+                {
+                    "url": "https://github.com/nunomaduro",
+                    "type": "github"
+                },
+                {
+                    "url": "https://www.patreon.com/nunomaduro",
+                    "type": "patreon"
+                }
+            ],
+            "time": "2026-10-09T11:23:21+00:00",
+            "published-time": "2026-10-09T11:34:18+00:00"
         },
         {
             "name": "phar-io/manifest",
@@ -10340,6 +10872,64 @@
             ],
             "time": "2026-10-27T04:16:22+00:00",
             "published-time": "2026-10-27T04:18:40+00:00"
+        },
+        {
+            "name": "rector/rector",
+            "version": "2.8.4",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/rectorphp/rector.git",
+                "reference": "55acbd956d7e3907f7d21aab54edd68a310609e6"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/rectorphp/rector/zipball/55acbd956d7e3907f7d21aab54edd68a310609e6",
+                "reference": "55acbd956d7e3907f7d21aab54edd68a310609e6",
+                "shasum": ""
+            },
+            "require": {
+                "php": "^7.4|^8.0",
+                "phpstan/phpstan": "^2.3.5"
+            },
+            "conflict": {
+                "rector/rector-doctrine": "*",
+                "rector/rector-downgrade-php": "*",
+                "rector/rector-phpunit": "*",
+                "rector/rector-symfony": "*"
+            },
+            "bin": [
+                "bin/rector"
+            ],
+            "type": "library",
+            "autoload": {
+                "files": [
+                    "bootstrap.php"
+                ]
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "description": "Instant Upgrade and Automated Refactoring of any PHP code",
+            "homepage": "https://getrector.com/",
+            "keywords": [
+                "automation",
+                "dev",
+                "migration",
+                "refactoring"
+            ],
+            "support": {
+                "issues": "https://github.com/rectorphp/rector/issues",
+                "source": "https://github.com/rectorphp/rector/tree/2.8.4"
+            },
+            "funding": [
+                {
+                    "url": "https://github.com/tomasvotruba",
+                    "type": "github"
+                }
+            ],
+            "time": "2026-11-03T18:48:08+00:00",
+            "published-time": "2026-11-03T18:48:15+00:00"
         },
         {
             "name": "sebastian/cli-parser",
@@ -11593,6 +12183,67 @@
             "published-time": "2026-11-04T11:31:03+00:00"
         },
         {
+            "name": "symplify/rule-doc-generator-contracts",
+            "version": "11.2.0",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/symplify/rule-doc-generator-contracts.git",
+                "reference": "479cfcfd46047f80624aba931d9789e50475b5c6"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/symplify/rule-doc-generator-contracts/zipball/479cfcfd46047f80624aba931d9789e50475b5c6",
+                "reference": "479cfcfd46047f80624aba931d9789e50475b5c6",
+                "shasum": ""
+            },
+            "require": {
+                "php": ">=8.1"
+            },
+            "require-dev": {
+                "php-parallel-lint/php-parallel-lint": "^1.3",
+                "phpstan/extension-installer": "^1.2",
+                "rector/rector": "^0.15.10",
+                "symplify/easy-ci": "^11.1",
+                "symplify/easy-coding-standard": "^11.1",
+                "symplify/easy-testing": "^11.1",
+                "symplify/phpstan-extensions": "^11.1",
+                "symplify/phpstan-rules": "11.2.3.72",
+                "tomasvotruba/unused-public": "^0.0.34"
+            },
+            "type": "library",
+            "extra": {
+                "branch-alias": {
+                    "dev-main": "11.2-dev"
+                }
+            },
+            "autoload": {
+                "psr-4": {
+                    "Symplify\\RuleDocGenerator\\": "src"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "description": "Contracts for production code of RuleDocGenerator",
+            "support": {
+                "source": "https://github.com/symplify/rule-doc-generator-contracts/tree/11.2.0"
+            },
+            "funding": [
+                {
+                    "url": "https://www.paypal.me/rectorphp",
+                    "type": "custom"
+                },
+                {
+                    "url": "https://github.com/tomasvotruba",
+                    "type": "github"
+                }
+            ],
+            "abandoned": true,
+            "time": "2024-03-18T22:02:54+00:00",
+            "published-time": "2024-03-18T22:01:44+00:00"
+        },
+        {
             "name": "ta-tikoma/phpunit-architecture-test",
             "version": "0.8.7",
             "source": {
@@ -11659,7 +12310,7 @@
     "prefer-stable": true,
     "prefer-lowest": false,
     "platform": {
-        "php": "^8.3"
+        "php": "^8.4"
     },
     "platform-dev": {},
     "plugin-api-version": "2.11.0"

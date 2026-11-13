@@ -6,14 +6,19 @@ use Database\Factories\UserFactory;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
+use Illuminate\Notifications\DatabaseNotification;
+use Illuminate\Notifications\DatabaseNotificationCollection;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Str;
 use Laravel\Fortify\Contracts\PasskeyUser;
 use Laravel\Fortify\PasskeyAuthenticatable;
 use Laravel\Fortify\TwoFactorAuthenticatable;
+use Laravel\Passkeys\Passkey;
 
 /**
  * @property int $id
@@ -27,13 +32,39 @@ use Laravel\Fortify\TwoFactorAuthenticatable;
  * @property string|null $remember_token
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
+ * @property-read DatabaseNotificationCollection<int, DatabaseNotification> $notifications
+ * @property-read int|null $notifications_count
+ * @property-read Collection<int, Passkey> $passkeys
+ * @property-read int|null $passkeys_count
+ *
+ * @method static UserFactory factory($count = null, $state = [])
+ * @method static Builder<static>|User newModelQuery()
+ * @method static Builder<static>|User newQuery()
+ * @method static Builder<static>|User query()
+ * @method static Builder<static>|User whereCreatedAt($value)
+ * @method static Builder<static>|User whereEmail($value)
+ * @method static Builder<static>|User whereEmailVerifiedAt($value)
+ * @method static Builder<static>|User whereId($value)
+ * @method static Builder<static>|User whereName($value)
+ * @method static Builder<static>|User wherePassword($value)
+ * @method static Builder<static>|User whereRememberToken($value)
+ * @method static Builder<static>|User whereTwoFactorConfirmedAt($value)
+ * @method static Builder<static>|User whereTwoFactorRecoveryCodes($value)
+ * @method static Builder<static>|User whereTwoFactorSecret($value)
+ * @method static Builder<static>|User whereUpdatedAt($value)
+ *
+ * @mixin \Eloquent
  */
 #[Fillable(['name', 'email', 'password'])]
 #[Hidden(['password', 'two_factor_secret', 'two_factor_recovery_codes', 'remember_token'])]
 class User extends Authenticatable implements MustVerifyEmail, PasskeyUser
 {
     /** @use HasFactory<UserFactory> */
-    use HasFactory, Notifiable, PasskeyAuthenticatable, TwoFactorAuthenticatable;
+    use HasFactory;
+
+    use Notifiable;
+    use PasskeyAuthenticatable;
+    use TwoFactorAuthenticatable;
 
     /**
      * Get the attributes that should be cast.

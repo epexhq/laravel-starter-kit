@@ -1,24 +1,29 @@
 {
     "$schema": "https://getcomposer.org/schema.json",
-    "name": "laravel/livewire-starter-kit",
+    "name": "epexhq/laravel-starter-kit",
     "type": "project",
-    "description": "The official Laravel starter kit for Livewire.",
+    "description": "A Laravel Livewire + Flux starter kit with Pest, Rector, Pint, Larastan (max), IDE Helper, Resend and Nightwatch.",
     "keywords": [
         "laravel",
         "framework"
     ],
     "license": "MIT",
     "require": {
-        "php": "^8.3",
+        "php": "^8.4",
         "laravel/chisel": "^0.1.0",
         "laravel/fortify": "^1.37.2",
         "laravel/framework": "^13.17",
+        "laravel/nightwatch": "^1.30",
         "laravel/tinker": "^3.0",
         "livewire/blaze": "^1.0",
         "livewire/flux": "^2.13.1",
-        "livewire/livewire": "^4.1"
+        "livewire/livewire": "^4.1",
+        "resend/resend-php": "^1.18"
     },
     "require-dev": {
+        "barryvdh/laravel-ide-helper": "^3.8",
+        "brianium/paratest": "~7.27.5",
+        "driftingly/rector-laravel": "^2.7",
         "fakerphp/faker": "^1.24",
         "larastan/larastan": "^3.9",
         "laravel/pail": "^1.2.5",
@@ -28,8 +33,9 @@
         "mockery/mockery": "^1.6",
         "nunomaduro/collision": "^8.9.3",
         "pestphp/pest": "^5.3",
-        "pestphp/pest-plugin-drift": "^5.0",
-        "pestphp/pest-plugin-laravel": "^5.0"
+        "pestphp/pest-plugin-laravel": "^5.0",
+        "pestphp/pest-plugin-rector": "^5.0",
+        "rector/rector": "^2.8"
     },
     "autoload": {
         "psr-4": {
@@ -48,6 +54,8 @@
             "composer install",
             "@php -r \"file_exists('.env') || copy('.env.example', '.env');\"",
             "@php artisan key:generate",
+            "@php artisan ide-helper:generate --ansi",
+            "@php artisan ide-helper:meta --ansi",
             "@php artisan migrate --force",
             "npm install",
             "npm run build"
@@ -56,6 +64,8 @@
             "Composer\\Config::disableProcessTimeout",
             "@php artisan dev"
         ],
+        "refactor": "rector",
+        "refactor:check": "rector --dry-run",
         "lint": [
             "pint --parallel"
         ],
@@ -64,6 +74,9 @@
         ],
         "ci:check": [
             "Composer\\Config::disableProcessTimeout",
+            "@refactor:check",
+            "@lint:check",
+            "@types:check",
             "@test"
         ],
         "types:check": [
@@ -71,9 +84,20 @@
         ],
         "test": [
             "@php artisan config:clear --ansi",
-            "@lint:check",
+            "pest --parallel"
+        ],
+        "qa": [
+            "Composer\\Config::disableProcessTimeout",
+            "@refactor",
+            "@lint",
             "@types:check",
-            "@php artisan test"
+            "@test"
+        ],
+        "ide-helper": [
+            "@php artisan ide-helper:generate --ansi",
+            "@php artisan ide-helper:meta --ansi",
+            "@php artisan ide-helper:models --write --ansi",
+            "@lint"
         ],
         "post-autoload-dump": [
             "Illuminate\\Foundation\\ComposerScripts::postAutoloadDump",
@@ -98,7 +122,10 @@
         "laravel": {
             "dont-discover": [],
             "installer": {
-                "post-create-project": []
+                "post-create-project": [
+                    "@php -r \"file_exists('database/database.sqlite') || touch('database/database.sqlite');\"",
+                    "@php artisan migrate --graceful --ansi"
+                ]
             }
         }
     },
