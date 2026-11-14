@@ -35,7 +35,7 @@ Create a new project from this repository with the [Laravel installer](https://l
 laravel new my-app --using=https://github.com/epexhq/laravel-starter-kit --no-boost
 ```
 
-The installer downloads the repository, creates `.env`, generates the app key, and asks which database the app uses: PostgreSQL (the default), MySQL or SQLite. The choice is written into `config/database.php`, `.env.example`, `.env`, `phpunit.xml`, `composer.json` and the CI workflows, so the project uses that database from then on. The `laravel` database and the `testing` database for the tests are then created and migrated (with SQLite, `database/database.sqlite`; tests use an in-memory database). Finally the installer asks whether to install and build the frontend. Pass `--no-boost`: Laravel Boost is already installed and configured.
+The installer downloads the repository, creates `.env`, generates the app key, and asks which database the app uses: PostgreSQL (the default), MySQL or SQLite. A one-time [Laravel Chisel](https://github.com/laravel/chisel) script (`chisel.php`) writes the choice into `config/database.php`, `.env.example`, `.env`, `phpunit.xml`, `composer.json` and `.github/actions/setup-database/action.yml`, then deletes itself, so the project uses that database from then on. The `laravel` database and the `testing` database for the tests are then created and migrated (with SQLite, `database/database.sqlite`; tests use an in-memory database). Finally the installer asks whether to install and build the frontend. Pass `--no-boost`: Laravel Boost is already installed and configured.
 
 To choose the database without the prompt, for example with `--no-interaction`, set `DB_CONNECTION` to `pgsql`, `mysql` or `sqlite`:
 
@@ -95,7 +95,7 @@ composer dev
 2. **Larastan** (`larastan.yml`) at max level, check only.
 3. **Tests** (`tests.yml`) in two time-balanced shards.
 
-Autofix and the tests use the database chosen when the project was created: a PostgreSQL 18 or MySQL 8.4 service container, or SQLite.
+Autofix and the tests start their database with `.github/actions/setup-database`: a PostgreSQL 18 or MySQL 8.4 container, or nothing for SQLite, matching the database chosen when the project was created.
 
 Larastan and the tests start after autofix finishes and run on the autofix commit when there is one. The autofix commit doesn't start a new CI run; on a pull request it shows a `ci` run awaiting approval, which you can ignore. After an autofix commit, pull the branch before pushing again.
 

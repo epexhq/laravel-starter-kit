@@ -62,7 +62,7 @@
             "npm run build"
         ],
         "setup:database": [
-            "@php configure-database.php"
+            "@php chisel.php"
         ],
         "setup:test-database": [
             "@putenv DB_DATABASE=testing",
