@@ -177,6 +177,8 @@ php artisan migrate --force
 - **Nightwatch:** click **Connect Nightwatch**, turn on monitoring and enter your token. Cloud sets `NIGHTWATCH_TOKEN` and runs the agent.
 - **Files:** attach a Laravel Object Storage bucket as the default disk for private files (`Storage::put()`). For public files, attach a public bucket with the disk name `public` (`Storage::disk('public')`). Don't pass a `visibility` option.
 - **Queues:** add a managed queue. Cloud sets `QUEUE_CONNECTION=cloud`.
+- **Cache:** attach a Laravel Valkey cache. Cloud sets the `REDIS_*` variables and `CACHE_STORE`.
+- **WebSockets:** see [Real-time with Reverb](#real-time-with-reverb).
 - **Scheduler:** turn on **Scheduler** on the App cluster. Use `->onOneServer()` on tasks that must run once when the cluster has more than one replica.
 
 Cloud's startup and readiness health checks use the `/up` route from `bootstrap/app.php`.
@@ -191,9 +193,9 @@ NIGHTWATCH_ENABLED=true
 FATHOM_SITE_ID=ABCDEFGH
 ```
 
-If the environment has no `APP_KEY`, add the output of `php artisan key:generate --show` too.
+Set `SESSION_DRIVER=redis` instead when a Valkey cache is attached. If the environment has no `APP_KEY`, add the output of `php artisan key:generate --show` too.
 
-Add only these variables. Don't copy your local `.env` into Cloud or push it with `cloud deploy --push-env`: a variable you set replaces the one Cloud sets, so local values such as `DB_HOST`, `MAIL_MAILER=log` and `LOG_STACK` would replace Cloud's database, mail and log settings.
+Add only these variables, and `BROADCAST_CONNECTION` from [Real-time with Reverb](#real-time-with-reverb). Don't copy your local `.env` into Cloud or push it with `cloud deploy --push-env`: a variable you set replaces the one Cloud sets, so local values such as `DB_HOST`, `MAIL_MAILER=log` and `LOG_STACK` would replace Cloud's database, mail and log settings.
 
 **Cloud CLI.** To deploy and manage Cloud from the terminal, and for the `deploying-to-cloud` agent skill, install the [Cloud CLI](https://cloud.laravel.com/docs/api/cli) globally:
 
@@ -202,6 +204,25 @@ composer global require laravel/cloud-cli
 cloud auth
 cloud deploy
 ```
+
+## Real-time with Reverb
+
+When a project needs WebSockets, run these in a terminal and accept the defaults:
+
+```bash
+php artisan install:broadcasting --reverb
+BROADCAST_CONNECTION=null php artisan reverb:install
+npm run build
+```
+
+The first command prints a `Failed to create broadcaster for connection "reverb"` error; the second command writes the missing Reverb settings to `.env`.
+
+Together they install `laravel/reverb`, `laravel-echo` and `pusher-js`, add `config/broadcasting.php`, `config/reverb.php`, `routes/channels.php` and `resources/js/echo.js`, and set `BROADCAST_CONNECTION=reverb` and the `REVERB_*` and `VITE_REVERB_*` variables in `.env`. `composer dev` then also runs `php artisan reverb:start`. Commit the files they add and change.
+
+On Laravel Cloud:
+
+1. Attach WebSockets to the environment (**Add resource → WebSockets**). Cloud sets the `REVERB_*` and `VITE_REVERB_*` variables.
+2. Then add `BROADCAST_CONNECTION=reverb` to the environment's variables and deploy. Add it only after WebSockets is attached.
 
 ## Rector
 
