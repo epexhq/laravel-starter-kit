@@ -16,6 +16,10 @@ jobs:
     permissions:
       contents: read
 
+    env:
+      # Flux Pro is installed from composer.fluxui.dev with the license in the repository secrets.
+      COMPOSER_AUTH: '{"http-basic":{"composer.fluxui.dev":{"username":"${{ secrets.FLUX_USERNAME }}","password":"${{ secrets.FLUX_LICENSE_KEY }}"}}}'
+
     steps:
       - name: Checkout code
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1

@@ -20,6 +20,7 @@ concurrency:
 jobs:
   autofix:
     uses: ./.github/workflows/autofix.yml
+    secrets: inherit
     permissions:
       contents: write
 
@@ -27,6 +28,7 @@ jobs:
     needs: autofix
     if: ${{ !cancelled() }}
     uses: ./.github/workflows/larastan.yml
+    secrets: inherit
     with:
       ref: ${{ needs.autofix.outputs.sha }}
 
@@ -34,5 +36,6 @@ jobs:
     needs: autofix
     if: ${{ !cancelled() }}
     uses: ./.github/workflows/tests.yml
+    secrets: inherit
     with:
       ref: ${{ needs.autofix.outputs.sha }}

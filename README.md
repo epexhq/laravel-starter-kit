@@ -1,13 +1,13 @@
 # Laravel Starter Kit
 
-A Laravel starter kit: an empty Laravel app on PostgreSQL with Livewire, Flux and a welcome page, plus a strict quality toolchain, Resend for email, Fathom Analytics and Laravel Nightwatch. It has no authentication.
+A Laravel starter kit: an empty Laravel app on PostgreSQL with Livewire, Flux Pro and a welcome page, plus a strict quality toolchain, Resend for email, Fathom Analytics and Laravel Nightwatch. It has no authentication.
 
 ## What's included
 
 | Area | Package | Notes |
 | --- | --- | --- |
 | Framework | Laravel 13, Livewire 4 | |
-| UI | [Flux](https://fluxui.dev) (free edition), Tailwind CSS 4 | Flux's default theme; welcome page in `resources/views/welcome.blade.php` |
+| UI | [Flux Pro](https://fluxui.dev), Tailwind CSS 4 | Flux's default theme; welcome page in `resources/views/welcome.blade.php` |
 | Database | PostgreSQL | |
 | Testing | [Pest 5](https://pestphp.com) | Parallel, time-balanced sharding, Test Impact Analysis |
 | Formatting | [Laravel Pint](https://laravel.com/docs/pint) | `laravel` preset |
@@ -22,11 +22,30 @@ A Laravel starter kit: an empty Laravel app on PostgreSQL with Livewire, Flux an
 ## Requirements
 
 - PHP 8.4 or newer
+- A [Flux Pro license](https://fluxui.dev/pricing), set up for Composer as in [Flux Pro](#flux-pro)
 - Composer 2
 - Node.js 22 and npm
 - PostgreSQL, reachable with the defaults in `.env.example` (`127.0.0.1:5432`, user `postgres`, no password)
 - To create a project with `laravel new --using`: the Laravel installer (tested with 5.33) and `npx`
 - [PCOV](https://github.com/krakjoe/pcov) or Xdebug for Pest's Test Impact Analysis locally (tests still run without one)
+
+## Flux Pro
+
+`livewire/flux-pro` is installed from `composer.fluxui.dev` (the `repositories` entry in `composer.json`). Composer logs in with your Flux account email as the username and your license key as the password, both on your [Flux dashboard](https://fluxui.dev/dashboard). Keep them out of the repository.
+
+On your machine, store them once in Composer's global `auth.json` (`~/.config/composer/auth.json`). It's outside every project, so `laravel new` and `composer install` in any copy of the kit use it:
+
+```bash
+composer config --global http-basic.composer.fluxui.dev your-email your-license-key
+```
+
+To keep them in one project only, leave out `--global`. Composer then writes `auth.json` in the project root, which `.gitignore` excludes. Composer also reads the `COMPOSER_AUTH` environment variable:
+
+```bash
+export COMPOSER_AUTH='{"http-basic":{"composer.fluxui.dev":{"username":"your-email","password":"your-license-key"}}}'
+```
+
+In GitHub Actions, add two repository secrets under **Settings → Secrets and variables → Actions**: `FLUX_USERNAME` (your Flux account email) and `FLUX_LICENSE_KEY`. `.github/workflows/ci.yml` passes them to the autofix, Larastan and tests workflows, which set `COMPOSER_AUTH` from them. Pull requests from forks don't receive the secrets, so CI can't install Flux Pro there.
 
 ## Getting started
 
