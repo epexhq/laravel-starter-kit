@@ -74,10 +74,10 @@ mkdir -p "$rustfsdata" "$HOME/.local/share/typesense"
 if [ ! -d "$rustfsdata/app" ]; then
   step 'Creating the app bucket'
   rustfs_pid=
-  if ! curl -fs http://127.0.0.1:9000/health >/dev/null; then
+  if ! curl -fs http://127.0.0.1:9000/health/ready >/dev/null; then
     RUSTFS_ACCESS_KEY=orb RUSTFS_SECRET_KEY=orb-secret rustfs server --address 127.0.0.1:9000 "$rustfsdata" >/tmp/rustfs-setup.log 2>&1 &
     rustfs_pid=$!
-    for _ in $(seq 100); do curl -fs http://127.0.0.1:9000/health >/dev/null && break; sleep 0.2; done
+    for _ in $(seq 100); do curl -fs http://127.0.0.1:9000/health/ready >/dev/null && break; sleep 0.2; done
   fi
   curl -fsS -o /dev/null -X PUT --aws-sigv4 'aws:amz:us-east-1:s3' --user orb:orb-secret \
     -H 'x-amz-content-sha256: e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855' \
