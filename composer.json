@@ -70,7 +70,7 @@
             "@composer run-script setup:test-database"
         ],
         "setup:test-database": [
-            "@putenv DB_DATABASE=testing",
+            "@putenv APP_ENV=testing",
             "@php artisan migrate --force --graceful --ansi"
         ],
         "dev": [
