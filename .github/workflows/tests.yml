@@ -17,8 +17,6 @@ jobs:
       contents: read
 
     env:
-      # Flux Pro is installed from composer.fluxui.dev with the license in the repository secrets
-      # (Actions secrets, and Dependabot secrets for Dependabot pull requests).
       COMPOSER_AUTH: '{"http-basic":{"composer.fluxui.dev":{"username":"${{ secrets.FLUX_USERNAME }}","password":"${{ secrets.FLUX_LICENSE_KEY }}"}}}'
 
     strategy:
@@ -37,20 +35,17 @@ jobs:
         uses: ./.github/actions/setup-database
 
       - name: Setup PHP
-        uses: shivammathur/setup-php@eb7c497e18156a6bbabfef1d3a82760b9eda3962 # v2
-        with:
-          php-version: '8.4'
-          extensions: pdo_pgsql
-          tools: composer:v2
-          coverage: none
+        uses: ./.github/actions/setup-php
 
-      - name: Setup Node
-        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
-        with:
-          node-version: '22'
+      - name: Install Composer dependencies
+        run: composer install --no-interaction --prefer-dist
 
+      # The tests need no frontend build (withoutVite() in tests/TestCase.php), only their database.
       - name: Setup Application
-        run: composer setup
+        run: |
+          cp .env.example .env
+          php artisan key:generate
+          composer setup:test-database
 
       # --ci runs the full suite (no TIA replay); shards are time-balanced by tests/.pest/shards.json.
       - name: Run tests
