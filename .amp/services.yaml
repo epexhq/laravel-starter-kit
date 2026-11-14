@@ -10,9 +10,21 @@ services:
     portal:
       title: Mailpit
     review: false
-  s3:
-    command: exec versitygw --port 127.0.0.1:9000 posix --nometa "$HOME/.local/share/s3"
-    port: 9000
+  rustfs:
+    command: >-
+      exec rustfs server --address 127.0.0.1:9000 --console-enable --console-address "127.0.0.1:$PORT"
+      "$HOME/.local/share/rustfs"
     env:
-      ROOT_ACCESS_KEY_ID: orb
-      ROOT_SECRET_ACCESS_KEY: orb-secret
+      RUSTFS_ACCESS_KEY: orb
+      RUSTFS_SECRET_KEY: orb-secret
+    portal:
+      url: /rustfs/console/
+      title: RustFS
+      description: Sign in with orb / orb-secret.
+    review: false
+  typesense:
+    command: >-
+      exec typesense-server --data-dir "$HOME/.local/share/typesense" --api-key orb
+      --listen-address 127.0.0.1 --api-port 8108
+    port: 8108
+    health: /health
