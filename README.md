@@ -17,6 +17,7 @@ A Laravel starter kit: an empty Laravel app on PostgreSQL with Livewire, Flux Pr
 | IDE support | [barryvdh/laravel-ide-helper](https://github.com/barryvdh/laravel-ide-helper) | Model docs in `_ide_helper_models.php` |
 | Email | [Resend](https://resend.com) (`resend/resend-php`) | Default mailer in `config/mail.php` |
 | Analytics | [Fathom Analytics](https://usefathom.com) | Off until `FATHOM_SITE_ID` is set; see [Analytics with Fathom](#analytics-with-fathom) |
+| Search | [Laravel Scout](https://laravel.com/docs/scout) + [Typesense](https://typesense.org) (`typesense/typesense-php`) | Scout's `collection` driver until `SCOUT_DRIVER=typesense`; see [Search with Scout and Typesense](#search-with-scout-and-typesense) |
 | Monitoring | [Laravel Nightwatch](https://nightwatch.laravel.com) | `config/nightwatch.php` published, disabled until `NIGHTWATCH_ENABLED=true` |
 | Hosting | [Laravel Cloud](https://cloud.laravel.com) | `league/flysystem-aws-s3-v3` for Object Storage, `aws/aws-sdk-php` for managed queues; see [Deploy to Laravel Cloud](#deploy-to-laravel-cloud) |
 | Coding agents | [Laravel Boost](https://laravel.com/docs/boost) | MCP server, guidelines and skills for Amp, Claude Code and Codex; see [Coding agents](#coding-agents) |
@@ -144,6 +145,60 @@ MAIL_FROM_ADDRESS="hello@your-verified-domain.com"
 FATHOM_SITE_ID=ABCDEFGH
 ```
 
+## Search with Scout and Typesense
+
+`laravel/scout` and `typesense/typesense-php` are installed. Until `SCOUT_DRIVER` is set, Scout uses its `collection` driver, which searches the models in the database and needs no search server. Tests always use it (`phpunit.xml`). To search with Typesense, set:
+
+```dotenv
+SCOUT_DRIVER=typesense
+TYPESENSE_HOST=127.0.0.1
+TYPESENSE_API_KEY=your-api-key
+```
+
+`TYPESENSE_PORT` (default `8108`) and `TYPESENSE_PROTOCOL` (default `http`) reach other servers, such as [Typesense Cloud](https://cloud.typesense.org) on `443` and `https`. Amp orbs run Typesense and set these variables; see [Amp orbs](#amp-orbs).
+
+Make a model searchable with Scout's `Searchable` trait. Typesense also needs a collection schema with the fields from `toSearchableArray()`, and the fields to search:
+
+```php
+use Laravel\Scout\Searchable;
+
+class Post extends Model
+{
+    use Searchable;
+
+    /** @return array{id: string, title: string, created_at: int} */
+    public function toSearchableArray(): array
+    {
+        return [
+            'id' => (string) $this->id,
+            'title' => $this->title,
+            'created_at' => $this->created_at?->getTimestamp() ?? 0,
+        ];
+    }
+
+    /** @return array<string, mixed> */
+    public function typesenseCollectionSchema(): array
+    {
+        return [
+            'fields' => [
+                ['name' => 'id', 'type' => 'string'],
+                ['name' => 'title', 'type' => 'string'],
+                ['name' => 'created_at', 'type' => 'int64'],
+            ],
+            'default_sorting_field' => 'created_at',
+        ];
+    }
+
+    /** @return array<string, mixed> */
+    public function typesenseSearchParameters(): array
+    {
+        return ['query_by' => 'title'];
+    }
+}
+```
+
+Search with `Post::search('laravel')->get()`. Scout indexes a model when it's saved; to index existing records, run `php artisan scout:import "App\Models\Post"`.
+
 ## Monitoring with Nightwatch
 
 `laravel/nightwatch` is installed and `config/nightwatch.php` is published with Nightwatch disabled by default. To enable it, set:
@@ -183,6 +238,7 @@ php artisan migrate --force
 - **Files:** attach a Laravel Object Storage bucket as the default disk for private files (`Storage::put()`). For public files, attach a public bucket with the disk name `public` (`Storage::disk('public')`). Don't pass a `visibility` option.
 - **Queues:** add a managed queue. Cloud sets `QUEUE_CONNECTION=cloud`.
 - **Cache:** attach a Laravel Valkey cache. Cloud sets the `REDIS_*` variables and `CACHE_STORE`.
+- **Search:** point Scout at a Typesense server, such as Typesense Cloud, with `SCOUT_DRIVER=typesense`, `TYPESENSE_HOST`, `TYPESENSE_API_KEY`, `TYPESENSE_PORT=443` and `TYPESENSE_PROTOCOL=https` as custom variables. Without them, search uses the database.
 - **WebSockets:** see [Real-time with Reverb](#real-time-with-reverb).
 - **Scheduler:** turn on **Scheduler** on the App cluster. Use `->onOneServer()` on tasks that must run once when the cluster has more than one replica.
 
@@ -200,7 +256,7 @@ FATHOM_SITE_ID=ABCDEFGH
 
 Set `SESSION_DRIVER=redis` instead when a Valkey cache is attached. If the environment has no `APP_KEY`, add the output of `php artisan key:generate --show` too.
 
-Add only these variables, and `BROADCAST_CONNECTION` from [Real-time with Reverb](#real-time-with-reverb). Don't copy your local `.env` into Cloud or push it with `cloud deploy --push-env`: a variable you set replaces the one Cloud sets, so local values such as `DB_HOST`, `MAIL_MAILER=log` and `LOG_STACK` would replace Cloud's database, mail and log settings.
+Add only these variables, the search variables, and `BROADCAST_CONNECTION` from [Real-time with Reverb](#real-time-with-reverb). Don't copy your local `.env` into Cloud or push it with `cloud deploy --push-env`: a variable you set replaces the one Cloud sets, so local values such as `DB_HOST`, `MAIL_MAILER=log` and `LOG_STACK` would replace Cloud's database, mail and log settings.
 
 **Cloud CLI.** To deploy and manage Cloud from the terminal, and for the `deploying-to-cloud` agent skill, install the [Cloud CLI](https://cloud.laravel.com/docs/api/cli) globally:
 
@@ -244,7 +300,7 @@ On Laravel Cloud:
 
 - **MCP server** (`php artisan boost:mcp`): tools to search the docs for the installed package versions (`search-docs`), read the database schema, run read-only queries, read the app and browser logs and the last error, and resolve app URLs.
 - **Guidelines** for the installed versions of Laravel, Livewire, Pest and Pint, in `AGENTS.md` (Amp, Codex) and `CLAUDE.md` (Claude Code). Add your own instructions outside the `<laravel-boost-guidelines>` tags; Boost only rewrites what's inside them.
-- **Skills** in `.agents/skills/` (Amp, Codex) and `.claude/skills/` (Claude Code): `laravel-best-practices`, `testing-best-practices`, `livewire-development`, `fluxui-development`, `tailwindcss-development`, `blaze-optimize`, `configure-nightwatch`, `deploying-to-cloud` and `infer-conventions`.
+- **Skills** in `.agents/skills/` (Amp, Codex) and `.claude/skills/` (Claude Code): `laravel-best-practices`, `testing-best-practices`, `livewire-development`, `fluxui-development`, `tailwindcss-development`, `blaze-optimize`, `configure-nightwatch`, `scout-development`, `deploying-to-cloud` and `infer-conventions`.
 
 | File | Contents |
 | --- | --- |
@@ -256,7 +312,19 @@ To add or remove agents or integrations, run `php artisan boost:install`. To reg
 
 The generated guidelines and skills come from Laravel Boost, Laravel Nightwatch and Livewire Blaze, all MIT-licensed.
 
-In [Amp](https://ampcode.com) orbs, `.agents/setup` installs PHP 8.4, PostgreSQL 18, Valkey, Mailpit, [RustFS](https://rustfs.com) (an S3-compatible store), Typesense and Composer, and, when the Flux credentials are set as project secrets (`FLUX_USERNAME`, `FLUX_LICENSE_KEY`), the dependencies, `.env` and both databases. `.amp/services.yaml` runs these services; start them with `amp orb services ensure`, which also prints the portal URLs of the Mailpit inbox and the RustFS console (sign in with `orb` / `orb-secret`). In the orb's `.env`, setup adds a block that sends mail to Mailpit (`MAIL_MAILER=smtp`), stores files on the `s3` disk in the `app` bucket, keeps the cache and sessions in Valkey (`CACHE_STORE=redis`, `SESSION_DRIVER=redis`), and sets Scout's Typesense variables (`SCOUT_DRIVER=typesense`, `TYPESENSE_HOST`, `TYPESENSE_API_KEY`). The queue stays on the database. To search with Typesense, install `laravel/scout` and `typesense/typesense-php`. Setup writes the `# Orb services` block once, so your later edits to it stay.
+### Amp orbs
+
+`.agents/setup` prepares an [Amp](https://ampcode.com) orb and `.amp/services.yaml` runs its services. Start them with `amp orb services ensure`, which prints the portal URLs.
+
+| Service | The orb's `.env` | Open it |
+| --- | --- | --- |
+| PostgreSQL 18 | the kit's defaults | |
+| Valkey | `CACHE_STORE=redis`, `SESSION_DRIVER=redis` | |
+| Mailpit | `MAIL_MAILER=smtp`, port 1025 | inbox portal |
+| RustFS | `FILESYSTEM_DISK=s3`, bucket `app` | console portal, `orb` / `orb-secret` |
+| Typesense | `SCOUT_DRIVER=typesense`, API key `orb` | |
+
+Setup installs the dependencies and creates both databases when `FLUX_USERNAME` and `FLUX_LICENSE_KEY` are project secrets. It writes the `# Orb services` block to `.env` once, so your later edits to it stay. The queue stays on the database. File URLs point at `127.0.0.1:9000` and open only inside the orb; browse stored files in the RustFS console.
 
 ## License
 
