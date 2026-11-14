@@ -62,10 +62,6 @@
             "npm run build"
         ],
         "setup:database": [
-            "@php configure-database.php"
-        ],
-        "setup:test-database": [
-            "@putenv DB_DATABASE=testing",
             "@php artisan migrate --force --graceful --ansi"
         ],
         "dev": [
