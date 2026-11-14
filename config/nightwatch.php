@@ -1,7 +1,7 @@
 <?php
 
 return [
-    'enabled' => env('NIGHTWATCH_ENABLED', true),
+    'enabled' => env('NIGHTWATCH_ENABLED', false),
     'token' => env('NIGHTWATCH_TOKEN'),
     'deployment' => env('NIGHTWATCH_DEPLOY', env('LARAVEL_CLOUD_DEPLOY_UUID', env('FORGE_DEPLOY_COMMIT', env('VAPOR_COMMIT_HASH')))),
     'server' => env('NIGHTWATCH_SERVER'),

@@ -1,9 +1,8 @@
 {
     "timings": {
-        "Tests\\Feature\\ExampleTest": 0.1916,
-        "Tests\\Feature\\FathomTest": 0.2164,
-        "Tests\\Unit\\ExampleTest": 0.0049
+        "Tests\\Feature\\ExampleTest": 0.1962,
+        "Tests\\Feature\\FathomTest": 0.2286
     },
-    "checksum": "7beb731380943e6a4ac3bb18137cf1b0",
-    "updated_at": "2026-11-14T06:30:10+00:00"
+    "checksum": "805417f085c8f1bff8202f7e5604b854",
+    "updated_at": "2026-11-14T08:58:01+00:00"
 }

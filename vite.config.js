@@ -14,6 +14,7 @@ export default defineConfig({
             fonts: [
                 bunny('Inter', {
                     weights: [400, 500, 600],
+                    optimizedFallbacks: false,
                 }),
             ],
         }),
@@ -25,8 +26,6 @@ export default defineConfig({
             ignored: [
                 '**/.agents/**',
                 '**/.claude/**',
-                '**/.cursor/**',
-                '**/.junie/**',
                 '**/storage/framework/views/**',
                 '**/vendor/**',
             ],
