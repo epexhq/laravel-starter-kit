@@ -20,6 +20,8 @@ jobs:
       # from forks only get a read-only token, so there the job fails on any diff instead.
       CAN_PUSH: ${{ github.event_name == 'push' || github.event.pull_request.head.repo.full_name == github.repository }}
       BRANCH: ${{ github.head_ref || github.ref_name }}
+      # Flux Pro is installed from composer.fluxui.dev with the license in the repository secrets.
+      COMPOSER_AUTH: '{"http-basic":{"composer.fluxui.dev":{"username":"${{ secrets.FLUX_USERNAME }}","password":"${{ secrets.FLUX_LICENSE_KEY }}"}}}'
 
     steps:
       - name: Checkout code
@@ -35,7 +37,7 @@ jobs:
         uses: shivammathur/setup-php@eb7c497e18156a6bbabfef1d3a82760b9eda3962 # v2
         with:
           php-version: '8.4'
-          extensions: pdo_mysql, pdo_pgsql, pdo_sqlite
+          extensions: pdo_pgsql
           tools: composer:v2
           coverage: none
 
