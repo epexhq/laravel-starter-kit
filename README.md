@@ -23,6 +23,7 @@ A Laravel starter kit based on the official [Laravel Livewire starter kit](https
 - PHP 8.4 or newer
 - Composer 2
 - Node.js 22 and npm
+- PostgreSQL, reachable with the `DB_*` settings in `.env` (by default `postgres@127.0.0.1:5432`, no password)
 - To create a project with `laravel new --using`: the Laravel installer (tested with 5.33) and `npx`
 - [PCOV](https://github.com/krakjoe/pcov) or Xdebug for Pest's Test Impact Analysis locally (tests still run without one)
 
@@ -31,12 +32,12 @@ A Laravel starter kit based on the official [Laravel Livewire starter kit](https
 Create a new project from this repository with the [Laravel installer](https://laravel.com/docs/installation#installing-php):
 
 ```bash
-laravel new my-app --using=https://github.com/epexhq/laravel-starter-kit
+laravel new my-app --using=https://github.com/epexhq/laravel-starter-kit --database=pgsql
 ```
 
-The installer downloads the repository, creates `.env`, generates the app key, creates the SQLite database, runs the migrations, and asks whether to install and build the frontend.
+The installer downloads the repository, creates `.env` with `DB_DATABASE=my_app`, generates the app key, creates the `testing` database for the test suite, asks to create the app database and runs the migrations, and asks whether to install and build the frontend. Pass `--database=pgsql`: without it, the installer switches the app to SQLite and skips the migrations. With `--no-interaction`, the installer doesn't create the app database; run `php artisan migrate` afterwards to create it.
 
-Or clone it and run the setup script, which installs dependencies, creates `.env` from `.env.example`, generates the app key, runs the migrations (SQLite by default) and builds the frontend:
+Or clone it and run the setup script, which installs dependencies, creates `.env` from `.env.example`, generates the app key, creates and migrates the `laravel` and `testing` databases, and builds the frontend:
 
 ```bash
 git clone https://github.com/epexhq/laravel-starter-kit my-app
@@ -62,13 +63,15 @@ composer dev
 | `composer lint` / `lint:check` | Pint, fixing or checking. |
 | `composer types:check` | Larastan at max level. |
 | `composer ide-helper` | Regenerates `_ide_helper.php`, `.phpstorm.meta.php` and `_ide_helper_models.php`. Needs a migrated database. |
-| `composer setup` | Installs dependencies, creates `.env`, generates the app key and IDE helper files, runs the migrations and builds the frontend. |
+| `composer setup` | Installs dependencies, creates `.env`, generates the app key and IDE helper files, creates and migrates the app and `testing` databases, and builds the frontend. |
+| `composer setup:test-database` | Creates and migrates the `testing` database that the tests use. |
 | `composer dev` | Runs the app server, queue worker, log viewer and Vite together. |
 
 `_ide_helper_models.php` holds the model docs and is committed; CI regenerates it (see [Continuous integration](#continuous-integration)). `_ide_helper.php` and `.phpstorm.meta.php` are git-ignored; run `composer ide-helper` after `composer update` to refresh them.
 
 ## Fast tests
 
+- **Database:** tests run against the PostgreSQL database `testing` (set in `phpunit.xml`). In parallel runs, each process gets its own `testing_test_N` copy.
 - **Parallel:** `composer test` runs `pest --parallel`, one process per CPU core.
 - **Test Impact Analysis (TIA):** `tests/Pest.php` enables `pest()->tia()->locally()`. On your machine, Pest re-runs only the tests affected by your changes and replays the rest from cache. The first run records the dependency graph and needs PCOV or Xdebug. TIA also needs a git repository with at least one commit, so it stays off (and the full suite runs) until you make your first commit. Use `--no-tia` for a full run, or `--tia --fresh` to re-record the graph. With `--ci`, TIA is off and the full suite runs.
 - **Sharding:** CI splits the suite into two shards (`pest --ci --parallel --shard=N/2`), balanced by the timings in `tests/.pest/shards.json`. Refresh the timings with `./vendor/bin/pest --parallel --no-tia --update-shards` as the suite grows, and change the shard count in `.github/workflows/tests.yml`.

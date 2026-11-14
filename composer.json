@@ -57,8 +57,13 @@
             "@php artisan ide-helper:generate --ansi",
             "@php artisan ide-helper:meta --ansi",
             "@php artisan migrate --force",
+            "@composer run-script setup:test-database",
             "npm install",
             "npm run build"
+        ],
+        "setup:test-database": [
+            "@putenv DB_DATABASE=testing",
+            "@php artisan migrate --force --graceful --ansi"
         ],
         "dev": [
             "Composer\\Config::disableProcessTimeout",
@@ -122,7 +127,7 @@
             "dont-discover": [],
             "installer": {
                 "post-create-project": [
-                    "@php artisan migrate --force --graceful --ansi"
+                    "@composer run-script setup:test-database"
                 ]
             }
         }
