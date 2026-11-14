@@ -1,0 +1,67 @@
+name: autofix
+
+on:
+  workflow_call:
+    outputs:
+      sha:
+        description: The commit autofix pushed, or empty when nothing needed fixing.
+        value: ${{ jobs.autofix.outputs.sha }}
+
+jobs:
+  autofix:
+    name: Rector and Pint
+    runs-on: ubuntu-latest
+
+    outputs:
+      sha: ${{ steps.commit.outputs.sha }}
+
+    env:
+      # Fixes are committed back for pushes and same-repository pull requests. Pull requests
+      # from forks only get a read-only token, so there the job fails on any diff instead.
+      CAN_PUSH: ${{ github.event_name == 'push' || github.event.pull_request.head.repo.full_name == github.repository }}
+      BRANCH: ${{ github.head_ref || github.ref_name }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          persist-credentials: ${{ env.CAN_PUSH }}
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@eb7c497e18156a6bbabfef1d3a82760b9eda3962 # v2
+        with:
+          php-version: '8.4'
+          tools: composer:v2
+          coverage: none
+
+      - name: Install Composer dependencies
+        run: composer install --no-interaction --prefer-dist
+
+      - name: Rector
+        run: composer refactor
+
+      - name: Pint
+        run: composer lint
+
+      - name: Commit fixes
+        id: commit
+        run: |
+          if git diff --quiet; then
+            echo "Rector and Pint made no changes."
+            exit 0
+          fi
+
+          git diff --stat
+
+          if [ "$CAN_PUSH" != "true" ]; then
+            git diff
+            echo "::error::Rector or Pint changed files. Run 'composer refactor' and 'composer lint', then push the result."
+            exit 1
+          fi
+
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git commit --all --quiet --message 'Apply Rector and Pint fixes'
+          git push origin "HEAD:refs/heads/$BRANCH"
+          echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"

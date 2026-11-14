@@ -1,57 +1,31 @@
 name: tests
 
 on:
-  push:
-    branches:
-      - main
-  pull_request:
-
-permissions:
-  contents: read
+  workflow_call:
+    inputs:
+      ref:
+        description: The commit to test; empty means the commit that triggered the run.
+        type: string
+        default: ''
 
 jobs:
-  quality:
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          persist-credentials: false
-
-      - name: Setup PHP
-        uses: shivammathur/setup-php@eb7c497e18156a6bbabfef1d3a82760b9eda3962 # v2
-        with:
-          php-version: '8.4'
-          tools: composer:v2
-          coverage: none
-
-      - name: Install Composer dependencies
-        run: composer install --no-interaction --prefer-dist
-
-      - name: Rector
-        run: composer refactor:check
-
-      - name: Pint
-        run: composer lint:check
-
-      - name: Larastan
-        run: composer types:check
-
   tests:
+    name: tests (shard ${{ matrix.shard }}/2)
     runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
 
     strategy:
       fail-fast: false
       matrix:
         shard: [1, 2]
 
-    name: tests (shard ${{ matrix.shard }}/2)
-
     steps:
       - name: Checkout code
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
+          ref: ${{ inputs.ref }}
           persist-credentials: false
 
       - name: Setup PHP
@@ -71,4 +45,6 @@ jobs:
 
       # --ci runs the full suite (no TIA replay); shards are time-balanced by tests/.pest/shards.json.
       - name: Run tests
-        run: ./vendor/bin/pest --ci --parallel --shard=${{ matrix.shard }}/2
+        run: |
+          git log -1 --format='Testing %H %s'
+          ./vendor/bin/pest --ci --parallel --shard=${{ matrix.shard }}/2

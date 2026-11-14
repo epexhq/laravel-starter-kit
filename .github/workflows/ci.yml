@@ -1,0 +1,38 @@
+name: ci
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.head_ref || github.ref }}
+  cancel-in-progress: true
+
+# Autofix runs first. Larastan and the tests then run on the code autofix produced: its
+# commit when it pushed one, otherwise the commit that triggered this run. A push made
+# with GITHUB_TOKEN starts no new run on its own (on a pull request GitHub only queues one
+# that waits for approval), and a rerun finds nothing to fix, so autofix cannot loop.
+jobs:
+  autofix:
+    uses: ./.github/workflows/autofix.yml
+    permissions:
+      contents: write
+
+  larastan:
+    needs: autofix
+    if: ${{ !cancelled() }}
+    uses: ./.github/workflows/larastan.yml
+    with:
+      ref: ${{ needs.autofix.outputs.sha }}
+
+  tests:
+    needs: autofix
+    if: ${{ !cancelled() }}
+    uses: ./.github/workflows/tests.yml
+    with:
+      ref: ${{ needs.autofix.outputs.sha }}

@@ -78,6 +78,16 @@ TIA can also download a dependency graph recorded by CI so a fresh clone replays
 
 `brianium/paratest` is pinned to `~7.27.5` because ParaTest 7.28 breaks `pest --parallel` in Pest 5.3.5. Pest has fixed this on its 5.x branch ([pestphp/pest#2025](https://github.com/pestphp/pest/pull/2025)); remove the pin once a Pest release includes it.
 
+## Continuous integration
+
+`.github/workflows/ci.yml` runs on pushes to `main` and on pull requests. It calls three workflows in order:
+
+1. **Autofix** (`autofix.yml`) runs Rector and Pint in fix mode. If they change anything, it commits the fixes as `github-actions[bot]` and pushes them back to the branch. For pull requests from forks, which it cannot push to, it fails and prints the diff instead.
+2. **Larastan** (`larastan.yml`) at max level, check only.
+3. **Tests** (`tests.yml`) in two time-balanced shards.
+
+Larastan and the tests start only after autofix finishes, and they check out the autofix commit when there is one, so they always run on the fixed code. A push made with the workflow's `GITHUB_TOKEN` does not start another run on its own, so autofix cannot loop. On a pull request, GitHub instead shows the autofix commit's `ci` run as awaiting approval. You can ignore it, because the run that made the commit already checked that code. Approving it runs CI again on the fixed commit, and autofix finds nothing more to fix. Pull your branch after an autofix commit before pushing again; otherwise your push is rejected as non-fast-forward.
+
 ## Email with Resend
 
 `config/mail.php` defaults to the `resend` mailer and `config/services.php` reads `RESEND_API_KEY`. `.env.example` sets `MAIL_MAILER=log`, so local emails (verification, password reset) are written to `storage/logs/laravel.log` instead of being sent. In production:
@@ -130,7 +140,7 @@ The skill's testing rule recommends `LazilyRefreshDatabase`, while this kit's `t
 - Tests are written in Pest's function syntax. The official kit's installer converts them with Pest Drift; that step had failed when this kit was generated, so it was redone by hand.
 - Larastan runs at `level: max` instead of 7. Three type fixes in `app/Providers/FortifyServiceProvider.php` and `config/fortify.php` (typed request input and config reads), plus two `(string)` casts in the published `config/nightwatch.php`, make it pass.
 - `composer test` only runs the tests; checks moved into `qa` and `ci:check`.
-- CI runs Rector, Pint and Larastan in one job, and the tests in two shards.
+- CI is split into autofix (Rector and Pint commit their fixes), Larastan, and two test shards; see [Continuous integration](#continuous-integration).
 
 ## License
 
