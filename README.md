@@ -23,7 +23,7 @@ A Laravel starter kit based on the official [Laravel Livewire starter kit](https
 - PHP 8.4 or newer
 - Composer 2
 - Node.js 22 and npm
-- PostgreSQL, reachable with the `DB_*` settings in `.env` (by default `postgres@127.0.0.1:5432`, no password)
+- The database you choose: PostgreSQL (default) or MySQL, reachable with the defaults in `.env.example` (`127.0.0.1`, user `postgres` or `root`, no password), or SQLite, which needs no server
 - To create a project with `laravel new --using`: the Laravel installer (tested with 5.33) and `npx`
 - [PCOV](https://github.com/krakjoe/pcov) or Xdebug for Pest's Test Impact Analysis locally (tests still run without one)
 
@@ -32,12 +32,20 @@ A Laravel starter kit based on the official [Laravel Livewire starter kit](https
 Create a new project from this repository with the [Laravel installer](https://laravel.com/docs/installation#installing-php):
 
 ```bash
-laravel new my-app --using=https://github.com/epexhq/laravel-starter-kit --database=pgsql --no-boost
+laravel new my-app --using=https://github.com/epexhq/laravel-starter-kit --no-boost
 ```
 
-The installer downloads the repository, creates `.env` with `DB_DATABASE=my_app`, generates the app key, creates the `testing` database for the test suite, asks to create the app database and runs the migrations, and asks whether to install and build the frontend. Pass `--database=pgsql`: without it, the installer switches the app to SQLite and skips the migrations. With `--no-interaction`, the installer doesn't create the app database; run `php artisan migrate` afterwards to create it. Pass `--no-boost` too: Laravel Boost is already installed and configured.
+The installer downloads the repository, creates `.env`, generates the app key, and asks which database the app uses: PostgreSQL (the default), MySQL or SQLite. The choice is written into `config/database.php`, `.env.example`, `.env`, `phpunit.xml`, `composer.json` and the CI workflows, so the project uses that database from then on. The `laravel` database and the `testing` database for the tests are then created and migrated (with SQLite, `database/database.sqlite`; tests use an in-memory database). Finally the installer asks whether to install and build the frontend. Pass `--no-boost`: Laravel Boost is already installed and configured.
 
-Or clone it and run the setup script, which installs dependencies, creates `.env` from `.env.example`, generates the app key, creates and migrates the `laravel` and `testing` databases, and builds the frontend:
+To choose the database without the prompt, for example with `--no-interaction`, set `DB_CONNECTION` to `pgsql`, `mysql` or `sqlite`:
+
+```bash
+DB_CONNECTION=mysql laravel new my-app --using=https://github.com/epexhq/laravel-starter-kit --no-boost --no-interaction
+```
+
+Without the prompt and without `DB_CONNECTION`, the project uses PostgreSQL. The installer's `--database` option doesn't choose the database; leave it out.
+
+Or clone it and run the setup script. It installs dependencies, creates `.env` from `.env.example`, generates the app key, asks which database to use (or reads `DB_CONNECTION`) as above, creates and migrates the databases, and builds the frontend:
 
 ```bash
 git clone https://github.com/epexhq/laravel-starter-kit my-app
@@ -63,8 +71,9 @@ composer dev
 | `composer lint` / `lint:check` | Pint, fixing or checking. |
 | `composer types:check` | Larastan at max level. |
 | `composer ide-helper` | Regenerates `_ide_helper.php`, `.phpstorm.meta.php` and `_ide_helper_models.php`. Needs a migrated database. |
-| `composer setup` | Installs dependencies, creates `.env`, generates the app key and IDE helper files, creates and migrates the app and `testing` databases, and builds the frontend. |
-| `composer setup:test-database` | Creates and migrates the `testing` database that the tests use. |
+| `composer setup` | Installs dependencies, creates `.env`, generates the app key and IDE helper files, runs `setup:database`, and builds the frontend. |
+| `composer setup:database` | Creates and migrates the app database and, with PostgreSQL or MySQL, the `testing` database. The first run in a fresh copy of the kit chooses the database first (see [Getting started](#getting-started)). |
+| `composer setup:test-database` | PostgreSQL and MySQL only: creates and migrates the `testing` database that the tests use. |
 | `composer dev` | Runs the app server, queue worker, log viewer and Vite together. |
 
 `_ide_helper_models.php` holds the model docs and is committed; CI regenerates it (see [Continuous integration](#continuous-integration)). `_ide_helper.php` and `.phpstorm.meta.php` are git-ignored; run `composer ide-helper` after `composer update` to refresh them.
@@ -73,7 +82,7 @@ composer dev
 
 ## Fast tests
 
-- **Database:** tests run against the PostgreSQL database `testing` (set in `phpunit.xml`). In parallel runs, each process gets its own `testing_test_N` copy.
+- **Database:** with PostgreSQL or MySQL, tests run against the `testing` database (set in `phpunit.xml`), and in parallel runs each process gets its own `testing_test_N` copy. With SQLite, each process uses an in-memory database.
 - **Parallel:** `composer test` runs `pest --parallel`, one process per CPU core.
 - **Test Impact Analysis (TIA):** `tests/Pest.php` enables `pest()->tia()->locally()`. On your machine, Pest re-runs only the tests affected by your changes and replays the rest from cache. The first run records the dependency graph and needs PCOV or Xdebug. TIA also needs a git repository with at least one commit, so it stays off (and the full suite runs) until you make your first commit. Use `--no-tia` for a full run, or `--tia --fresh` to re-record the graph. With `--ci`, TIA is off and the full suite runs.
 - **Sharding:** CI splits the suite into two shards (`pest --ci --parallel --shard=N/2`), balanced by the timings in `tests/.pest/shards.json`. Refresh the timings with `./vendor/bin/pest --parallel --no-tia --update-shards` as the suite grows, and change the shard count in `.github/workflows/tests.yml`.
@@ -82,9 +91,11 @@ composer dev
 
 `.github/workflows/ci.yml` runs on pushes to `main` and on pull requests. It calls three workflows in order:
 
-1. **Autofix** (`autofix.yml`) runs Rector, then IDE Helper against a migrated PostgreSQL database, then Pint. If anything changed, it commits the result as `github-actions[bot]` and pushes it back to the branch. On pull requests from forks it fails and prints the diff instead.
+1. **Autofix** (`autofix.yml`) runs Rector, then IDE Helper against a migrated database, then Pint. If anything changed, it commits the result as `github-actions[bot]` and pushes it back to the branch. On pull requests from forks it fails and prints the diff instead.
 2. **Larastan** (`larastan.yml`) at max level, check only.
-3. **Tests** (`tests.yml`) against PostgreSQL, in two time-balanced shards.
+3. **Tests** (`tests.yml`) in two time-balanced shards.
+
+Autofix and the tests use the database chosen when the project was created: a PostgreSQL 18 or MySQL 8.4 service container, or SQLite.
 
 Larastan and the tests start after autofix finishes and run on the autofix commit when there is one. The autofix commit doesn't start a new CI run; on a pull request it shows a `ci` run awaiting approval, which you can ignore. After an autofix commit, pull the branch before pushing again.
 

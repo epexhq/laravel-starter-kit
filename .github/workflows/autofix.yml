@@ -12,14 +12,11 @@ jobs:
     name: Rector, IDE Helper and Pint
     runs-on: ubuntu-latest
 
-    # IDE Helper reads the model columns from a migrated database.
     services:
       postgres:
         image: postgres:18
         env:
-          POSTGRES_USER: postgres
-          POSTGRES_PASSWORD: postgres
-          POSTGRES_DB: laravel
+          POSTGRES_HOST_AUTH_METHOD: trust
         ports:
           - 5432:5432
         options: >-
@@ -36,12 +33,6 @@ jobs:
       # from forks only get a read-only token, so there the job fails on any diff instead.
       CAN_PUSH: ${{ github.event_name == 'push' || github.event.pull_request.head.repo.full_name == github.repository }}
       BRANCH: ${{ github.head_ref || github.ref_name }}
-      DB_CONNECTION: pgsql
-      DB_HOST: 127.0.0.1
-      DB_PORT: 5432
-      DB_DATABASE: laravel
-      DB_USERNAME: postgres
-      DB_PASSWORD: postgres
 
     steps:
       - name: Checkout code
@@ -64,6 +55,7 @@ jobs:
       - name: Rector
         run: composer refactor
 
+      # IDE Helper reads the model columns from the migrated database.
       - name: Migrate database
         run: |
           cp .env.example .env
