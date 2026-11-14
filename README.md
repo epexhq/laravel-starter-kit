@@ -62,9 +62,13 @@ The installer downloads the repository, installs the Composer dependencies from 
 
 - `--no-boost`: Laravel Boost is already installed and configured.
 - `--phpunit`: the kit already uses Pest. Without this flag the installer sets Pest up again, which runs `composer update` and moves every dependency past `composer.lock`. The flag only skips that step; the project still uses Pest.
-- Leave out `--database`.
+- Leave out `--database`: the kit is already set up for PostgreSQL, and the flag makes the installer rewrite `.env.example`.
+
+PostgreSQL must be running: if the installer can't connect, it stops with the connection error. Start PostgreSQL, then run `composer setup:database` in the project.
 
 Every project uses the databases `laravel` and `laravel_testing`. To give a project its own, set `DB_DATABASE` in `.env` and run `composer setup:database`; the tests use the same name with `_testing` appended.
+
+A new project keeps the kit's MIT `LICENSE` file and `"license": "MIT"` in `composer.json`. For a private project, replace both.
 
 Or clone it and run the setup script. It installs dependencies, creates `.env` from `.env.example`, generates the app key, creates and migrates both databases, and builds the frontend:
 
@@ -105,7 +109,8 @@ composer dev
 
 - **Database:** `phpunit.xml` sets `APP_ENV=testing`, so tests run against the app's database name with `_testing` appended (`config/database.php`), such as `laravel_testing`. In parallel runs each process gets its own `laravel_testing_test_N` copy.
 - **No frontend build needed:** `tests/TestCase.php` calls `withoutVite()`, so the tests pass without `npm run build`.
-- **Parallel:** `composer test` runs `pest --parallel`, one process per CPU core.
+- **Parallel:** `composer test` runs `pest --parallel`, one process per CPU core. `brianium/paratest` is pinned to 7.27 in `composer.json` because Pest 5.3 fails with ParaTest 7.28. Remove the pin when a Pest release supports 7.28.
+- **Test location:** `phpunit.xml` runs every `*Test.php` file under `tests/`, including unit tests made with `php artisan make:test --unit`.
 - **Test Impact Analysis (TIA):** `tests/Pest.php` enables `pest()->tia()->locally()`. On your machine, Pest re-runs only the tests affected by your changes and replays the rest from cache. The first run records the dependency graph and needs PCOV or Xdebug. TIA also needs a git repository with at least one commit, so it stays off (and the full suite runs) until you make your first commit. Use `--no-tia` for a full run, or `--tia --fresh` to re-record the graph. With `--ci`, TIA is off and the full suite runs.
 - **Sharding:** CI splits the suite into two shards (`pest --ci --parallel --shard=N/2`), balanced by the timings in `tests/.pest/shards.json`. Refresh the timings with `./vendor/bin/pest --parallel --no-tia --update-shards` as the suite grows, and change the shard count in `.github/workflows/tests.yml`.
 
@@ -117,7 +122,7 @@ composer dev
 2. **Larastan** (`larastan.yml`) at max level, check only.
 3. **Tests** (`tests.yml`) in two time-balanced shards.
 
-Autofix and the tests start a PostgreSQL 18 container with `.github/actions/setup-database`.
+All three install PHP 8.4 with `.github/actions/setup-php`; change the version there. Autofix and the tests start a PostgreSQL 18 container with `.github/actions/setup-database`. The tests install the Composer dependencies and create their database; they don't build the frontend.
 
 Larastan and the tests start after autofix succeeds and run on the autofix commit when there is one. The autofix commit doesn't start a new CI run; on a pull request it shows a `ci` run awaiting approval, which you can ignore. After an autofix commit, pull the branch before pushing again.
 
@@ -148,7 +153,7 @@ NIGHTWATCH_ENABLED=true
 NIGHTWATCH_TOKEN=your-environment-token
 ```
 
-Nightwatch only sends data while its agent runs next to your app, so keep `php artisan nightwatch:agent` running under a process monitor (Laravel Cloud and Forge can do this for you). `LOG_STACK=single,nightwatch` in `.env.example` also sends logs to Nightwatch once it's enabled. Nightwatch is disabled in tests through `phpunit.xml`.
+Nightwatch only sends data while its agent runs next to your app, so keep `php artisan nightwatch:agent` running under a process monitor (Laravel Cloud and Forge can do this for you). Laravel Cloud sets `LOG_STACK` itself when Nightwatch is connected; on other hosts, set `LOG_STACK=single,nightwatch` to send logs to Nightwatch too. Nightwatch is disabled in tests through `phpunit.xml`.
 
 ## Deploy to Laravel Cloud
 
@@ -217,7 +222,7 @@ npm run build
 
 The first command prints a `Failed to create broadcaster for connection "reverb"` error; the second command writes the missing Reverb settings to `.env`.
 
-Together they install `laravel/reverb`, `laravel-echo` and `pusher-js`, add `config/broadcasting.php`, `config/reverb.php`, `routes/channels.php` and `resources/js/echo.js`, and set `BROADCAST_CONNECTION=reverb` and the `REVERB_*` and `VITE_REVERB_*` variables in `.env`. `composer dev` then also runs `php artisan reverb:start`. Commit the files they add and change.
+Together they install `laravel/reverb`, `laravel-echo` and `pusher-js`, add `config/broadcasting.php`, `config/reverb.php`, `routes/channels.php` and `resources/js/echo.js`, and set `BROADCAST_CONNECTION=reverb` and the `REVERB_*` and `VITE_REVERB_*` variables in `.env`. `composer dev` then also runs `php artisan reverb:start`. Then delete the example `App.Models.User.{id}` channel from `routes/channels.php`: the kit has no `User` model, and Larastan rejects the channel. Commit the files they add and change.
 
 On Laravel Cloud:
 
@@ -251,6 +256,8 @@ To add or remove agents or integrations, run `php artisan boost:install`. To reg
 
 The generated guidelines and skills come from Laravel Boost, Laravel Nightwatch and Livewire Blaze, all MIT-licensed.
 
+In [Amp](https://ampcode.com) orbs, `.agents/setup` installs PHP 8.4, PostgreSQL 18 and Composer, and, when the Flux credentials are set as project secrets (`FLUX_USERNAME`, `FLUX_LICENSE_KEY`), the dependencies, `.env` and both databases. `.amp/services.yaml` runs PostgreSQL; start it with `amp orb services ensure`.
+
 ## License
 
-MIT
+MIT. See `LICENSE`.

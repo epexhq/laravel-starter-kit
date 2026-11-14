@@ -17,6 +17,10 @@ concurrency:
 # commit when it pushed one, otherwise the commit that triggered this run. A push made
 # with GITHUB_TOKEN starts no new run on its own (on a pull request GitHub only queues one
 # that waits for approval), and a rerun finds nothing to fix, so autofix cannot loop.
+#
+# Each workflow installs Flux Pro from composer.fluxui.dev with the FLUX_USERNAME and
+# FLUX_LICENSE_KEY secrets passed by `secrets: inherit` (Actions secrets, and Dependabot
+# secrets for Dependabot pull requests).
 jobs:
   autofix:
     uses: ./.github/workflows/autofix.yml

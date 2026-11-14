@@ -1,0 +1,4 @@
+services:
+  postgres:
+    command: exec /usr/lib/postgresql/18/bin/postgres -D "$HOME/.local/share/postgresql"
+    port: 5432
