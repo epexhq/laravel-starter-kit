@@ -68,12 +68,12 @@
             "npm run build"
         ],
         "setup:database": [
-            "@php artisan migrate --force --graceful --ansi",
+            "@php artisan migrate --force --ansi",
             "@composer run-script setup:test-database"
         ],
         "setup:test-database": [
             "@putenv APP_ENV=testing",
-            "@php artisan migrate --force --graceful --ansi"
+            "@php artisan migrate --force --ansi"
         ],
         "dev": [
             "Composer\\Config::disableProcessTimeout",
@@ -146,8 +146,7 @@
         "preferred-install": "dist",
         "sort-packages": true,
         "allow-plugins": {
-            "pestphp/pest-plugin": true,
-            "php-http/discovery": true
+            "pestphp/pest-plugin": true
         }
     },
     "minimum-stability": "stable",
