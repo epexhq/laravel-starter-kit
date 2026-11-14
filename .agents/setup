@@ -1,0 +1,75 @@
+#!/usr/bin/env bash
+# Prepares an Amp orb (Debian 12) for this repository: PHP 8.4, PostgreSQL 18 and Composer, then
+# the dependencies, .env and both databases when the Flux Pro license is available.
+set -euo pipefail
+
+step() { printf '\n==> %s\n' "$*"; }
+
+pgbin=/usr/lib/postgresql/18/bin
+pgdata="$HOME/.local/share/postgresql"
+
+if ! command -v php8.4 >/dev/null || [ ! -x "$pgbin/postgres" ]; then
+  step 'Installing PHP 8.4 and PostgreSQL 18'
+  codename=$(. /etc/os-release && echo "$VERSION_CODENAME")
+  curl -fsSLo /tmp/sury-keyring.deb https://packages.sury.org/debsuryorg-archive-keyring.deb
+  sudo dpkg -i /tmp/sury-keyring.deb >/dev/null && rm /tmp/sury-keyring.deb
+  echo "deb [signed-by=/usr/share/keyrings/deb.sury.org-php.gpg] https://packages.sury.org/php/ $codename main" | sudo tee /etc/apt/sources.list.d/php.list >/dev/null
+  curl -fsSL https://www.postgresql.org/media/keys/ACCC4CF8.asc | sudo gpg --dearmor --yes -o /usr/share/keyrings/pgdg.gpg
+  echo "deb [signed-by=/usr/share/keyrings/pgdg.gpg] https://apt.postgresql.org/pub/repos/apt $codename-pgdg main" | sudo tee /etc/apt/sources.list.d/pgdg.list >/dev/null
+  # .amp/services.yaml runs PostgreSQL from $pgdata, so skip the package's default cluster.
+  sudo install -d /etc/postgresql-common
+  echo 'create_main_cluster = false' | sudo tee /etc/postgresql-common/createcluster.conf >/dev/null
+  sudo apt-get update -qq
+  sudo DEBIAN_FRONTEND=noninteractive apt-get install -y -qq \
+    php8.4-cli php8.4-pgsql php8.4-mbstring php8.4-xml php8.4-curl php8.4-zip php8.4-intl php8.4-bcmath php8.4-pcov \
+    postgresql-18 unzip
+fi
+
+if ! command -v composer >/dev/null; then
+  step 'Installing Composer'
+  curl -fsSLo /tmp/composer-setup.php https://getcomposer.org/installer
+  sudo php /tmp/composer-setup.php --install-dir=/usr/local/bin --filename=composer --quiet
+  rm /tmp/composer-setup.php
+fi
+
+if [ ! -f "$pgdata/PG_VERSION" ]; then
+  step 'Creating the PostgreSQL data directory'
+  mkdir -p "$pgdata"
+  "$pgbin/initdb" -D "$pgdata" -U postgres --auth=trust >/dev/null
+  cat >> "$pgdata/postgresql.conf" <<'CONF'
+listen_addresses = '127.0.0.1'
+unix_socket_directories = '/tmp'
+fsync = off
+synchronous_commit = off
+full_page_writes = off
+CONF
+fi
+
+# Flux Pro needs the license: FLUX_USERNAME and FLUX_LICENSE_KEY as project secrets, or COMPOSER_AUTH.
+if [ -z "${COMPOSER_AUTH:-}" ] && [ -n "${FLUX_USERNAME:-}" ] && [ -n "${FLUX_LICENSE_KEY:-}" ]; then
+  COMPOSER_AUTH=$(printf '{"http-basic":{"composer.fluxui.dev":{"username":"%s","password":"%s"}}}' "$FLUX_USERNAME" "$FLUX_LICENSE_KEY")
+  export COMPOSER_AUTH
+fi
+
+if [ -z "${COMPOSER_AUTH:-}" ]; then
+  step 'Skipping dependencies: set FLUX_USERNAME and FLUX_LICENSE_KEY as project secrets, then run composer setup'
+  exit 0
+fi
+
+step 'Installing dependencies'
+composer install --no-interaction --prefer-dist --no-progress
+npm ci --no-audit --no-fund
+
+[ -f .env ] || cp -- .env.example .env
+grep -q '^APP_KEY=base64:' .env || php artisan key:generate --ansi
+
+step 'Creating the databases'
+started=false
+if ! "$pgbin/pg_isready" -q -h 127.0.0.1; then
+  "$pgbin/pg_ctl" -D "$pgdata" -l /tmp/postgres-setup.log -w start >/dev/null
+  started=true
+fi
+composer setup:database
+if [ "$started" = true ]; then
+  "$pgbin/pg_ctl" -D "$pgdata" -w stop >/dev/null
+fi

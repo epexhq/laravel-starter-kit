@@ -1,6 +1,8 @@
 /.agents/*
+!/.agents/setup
 !/.agents/skills/
 /.amp/*
+!/.amp/services.yaml
 !/.amp/settings.json
 /.claude/*
 !/.claude/skills/
