@@ -256,7 +256,7 @@ To add or remove agents or integrations, run `php artisan boost:install`. To reg
 
 The generated guidelines and skills come from Laravel Boost, Laravel Nightwatch and Livewire Blaze, all MIT-licensed.
 
-In [Amp](https://ampcode.com) orbs, `.agents/setup` installs PHP 8.4, PostgreSQL 18 and Composer, and, when the Flux credentials are set as project secrets (`FLUX_USERNAME`, `FLUX_LICENSE_KEY`), the dependencies, `.env` and both databases. `.amp/services.yaml` runs PostgreSQL; start it with `amp orb services ensure`.
+In [Amp](https://ampcode.com) orbs, `.agents/setup` installs PHP 8.4, PostgreSQL 18, Valkey, Mailpit, [versitygw](https://github.com/versity/versitygw) (an S3-compatible store) and Composer, and, when the Flux credentials are set as project secrets (`FLUX_USERNAME`, `FLUX_LICENSE_KEY`), the dependencies, `.env` and both databases. `.amp/services.yaml` runs these services; start them with `amp orb services ensure`, which also prints the Mailpit inbox's portal URL. In the orb's `.env`, setup adds a block that sends mail to Mailpit (`MAIL_MAILER=smtp`), stores files on the `s3` disk in the `app` bucket, and keeps the cache and sessions in Valkey (`CACHE_STORE=redis`, `SESSION_DRIVER=redis`). The queue stays on the database. Setup writes the `# Orb services` block once, so your later edits to it stay.
 
 ## License
 

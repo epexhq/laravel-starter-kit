@@ -1,14 +1,20 @@
 #!/usr/bin/env bash
-# Prepares an Amp orb (Debian 12) for this repository: PHP 8.4, PostgreSQL 18 and Composer, then
-# the dependencies, .env and both databases when the Flux Pro license is available.
+# Prepares an Amp orb (Debian 12) for this repository: PHP 8.4, PostgreSQL 18, Valkey, Mailpit,
+# an S3-compatible store (versitygw) and Composer, then the dependencies, .env and both databases
+# when the Flux Pro license is available.
 set -euo pipefail
 
 step() { printf '\n==> %s\n' "$*"; }
 
 pgbin=/usr/lib/postgresql/18/bin
 pgdata="$HOME/.local/share/postgresql"
+s3data="$HOME/.local/share/s3"
+packages=(
+  php8.4-cli php8.4-pgsql php8.4-mbstring php8.4-xml php8.4-curl php8.4-zip php8.4-intl php8.4-bcmath
+  php8.4-pcov php8.4-redis postgresql-18 unzip
+)
 
-if ! command -v php8.4 >/dev/null || [ ! -x "$pgbin/postgres" ]; then
+if ! dpkg -s "${packages[@]}" >/dev/null 2>&1; then
   step 'Installing PHP 8.4 and PostgreSQL 18'
   codename=$(. /etc/os-release && echo "$VERSION_CODENAME")
   curl -fsSLo /tmp/sury-keyring.deb https://packages.sury.org/debsuryorg-archive-keyring.deb
@@ -20,10 +26,42 @@ if ! command -v php8.4 >/dev/null || [ ! -x "$pgbin/postgres" ]; then
   sudo install -d /etc/postgresql-common
   echo 'create_main_cluster = false' | sudo tee /etc/postgresql-common/createcluster.conf >/dev/null
   sudo apt-get update -qq
-  sudo DEBIAN_FRONTEND=noninteractive apt-get install -y -qq \
-    php8.4-cli php8.4-pgsql php8.4-mbstring php8.4-xml php8.4-curl php8.4-zip php8.4-intl php8.4-bcmath php8.4-pcov \
-    postgresql-18 unzip
+  sudo DEBIAN_FRONTEND=noninteractive apt-get install -y -qq "${packages[@]}"
 fi
+
+# Release binaries for .amp/services.yaml, installed to /usr/local/bin.
+case "$(dpkg --print-architecture)" in
+  amd64) mailpit_arch=amd64 release_arch=x86_64 ;;
+  arm64) mailpit_arch=arm64 release_arch=arm64 ;;
+esac
+
+install_release() { # <url> <files in the archive...>
+  local tmp
+  tmp=$(mktemp -d)
+  curl -fsSL "$1" | tar -xz -C "$tmp"
+  for file in "${@:2}"; do sudo install -m 755 "$tmp/$file" /usr/local/bin/; done
+  rm -rf "$tmp"
+}
+
+if ! command -v valkey-server >/dev/null; then
+  step 'Installing Valkey'
+  install_release "https://download.valkey.io/releases/valkey-9.1.3-jammy-$release_arch.tar.gz" \
+    "valkey-9.1.3-jammy-$release_arch/bin/valkey-server" "valkey-9.1.3-jammy-$release_arch/bin/valkey-cli"
+fi
+
+if ! command -v mailpit >/dev/null; then
+  step 'Installing Mailpit'
+  install_release "https://github.com/axllent/mailpit/releases/download/v1.33.1/mailpit-linux-$mailpit_arch.tar.gz" mailpit
+fi
+
+if ! command -v versitygw >/dev/null; then
+  step 'Installing versitygw'
+  install_release "https://github.com/versity/versitygw/releases/download/v1.11.0/versitygw_v1.11.0_Linux_$release_arch.tar.gz" \
+    "versitygw_v1.11.0_Linux_$release_arch/versitygw"
+fi
+
+# Each directory under $s3data is a bucket.
+mkdir -p "$s3data/app"
 
 if ! command -v composer >/dev/null; then
   step 'Installing Composer'
@@ -62,6 +100,20 @@ npm ci --no-audit --no-fund
 
 [ -f .env ] || cp -- .env.example .env
 grep -q '^APP_KEY=base64:' .env || php artisan key:generate --ansi
+
+# Point mail, files, cache and sessions at the orb services, once per .env.
+orb_env=(
+  MAIL_MAILER=smtp MAIL_HOST=127.0.0.1 MAIL_PORT=1025
+  FILESYSTEM_DISK=s3 AWS_ACCESS_KEY_ID=orb AWS_SECRET_ACCESS_KEY=orb-secret AWS_DEFAULT_REGION=us-east-1
+  AWS_BUCKET=app AWS_ENDPOINT=http://127.0.0.1:9000 AWS_USE_PATH_STYLE_ENDPOINT=true
+  CACHE_STORE=redis SESSION_DRIVER=redis
+)
+if ! grep -q '^# Orb services' .env; then
+  step 'Pointing .env at the orb services'
+  for pair in "${orb_env[@]}"; do sed -i "/^${pair%%=*}=/d" .env; done
+  printf '\n# Orb services (.amp/services.yaml)\n' >> .env
+  printf '%s\n' "${orb_env[@]}" >> .env
+fi
 
 step 'Creating the databases'
 started=false
