@@ -18,6 +18,7 @@ A Laravel starter kit: an empty Laravel app on PostgreSQL with Livewire, Flux Pr
 | Email | [Resend](https://resend.com) (`resend/resend-php`) | Default mailer in `config/mail.php` |
 | Analytics | [Fathom Analytics](https://usefathom.com) | Off until `FATHOM_SITE_ID` is set; see [Analytics with Fathom](#analytics-with-fathom) |
 | Monitoring | [Laravel Nightwatch](https://nightwatch.laravel.com) | `config/nightwatch.php` published, disabled until `NIGHTWATCH_ENABLED=true` |
+| Hosting | [Laravel Cloud](https://cloud.laravel.com) | `league/flysystem-aws-s3-v3` for Object Storage, `aws/aws-sdk-php` for managed queues; see [Deploy to Laravel Cloud](#deploy-to-laravel-cloud) |
 | Coding agents | [Laravel Boost](https://laravel.com/docs/boost) | MCP server, guidelines and skills for Amp, Claude Code and Codex; see [Coding agents](#coding-agents) |
 | Agent output | `laravel/pao` | Compact output from Pest, Pint, Rector and Larastan for coding agents; set `PAO_DISABLE=1` for the normal output |
 
@@ -149,6 +150,80 @@ NIGHTWATCH_TOKEN=your-environment-token
 
 Nightwatch only sends data while its agent runs next to your app, so keep `php artisan nightwatch:agent` running under a process monitor (Laravel Cloud and Forge can do this for you). `LOG_STACK=single,nightwatch` in `.env.example` also sends logs to Nightwatch once it's enabled. Nightwatch is disabled in tests through `phpunit.xml`.
 
+## Deploy to Laravel Cloud
+
+Create an application in [Laravel Cloud](https://cloud.laravel.com) from your project's repository, then set up its environment.
+
+**Build commands.** The first line logs Composer in to Flux Pro with the `FLUX_USERNAME` and `FLUX_LICENSE_KEY` variables below:
+
+```bash
+composer config http-basic.composer.fluxui.dev "$FLUX_USERNAME" "$FLUX_LICENSE_KEY"
+composer install --no-dev
+npm ci --audit false
+npm run build
+php artisan optimize
+```
+
+**Deploy command:**
+
+```bash
+php artisan migrate --force
+```
+
+**Resources** on the environment's canvas:
+
+- **Database:** a Laravel Serverless Postgres database. Cloud sets the `DB_*` variables.
+- **Email:** attach Resend. Cloud sets `RESEND_API_KEY`, `MAIL_MAILER`, `MAIL_FROM_ADDRESS` and `MAIL_FROM_NAME`.
+- **Nightwatch:** click **Connect Nightwatch**, turn on monitoring and enter your token. Cloud sets `NIGHTWATCH_TOKEN` and runs the agent.
+- **Files:** attach a Laravel Object Storage bucket as the default disk for private files (`Storage::put()`). For public files, attach a public bucket with the disk name `public` (`Storage::disk('public')`). Don't pass a `visibility` option.
+- **Queues:** add a managed queue. Cloud sets `QUEUE_CONNECTION=cloud`.
+- **Cache:** attach a Laravel Valkey cache. Cloud sets the `REDIS_*` variables and `CACHE_STORE`.
+- **WebSockets:** see [Real-time with Reverb](#real-time-with-reverb).
+- **Scheduler:** turn on **Scheduler** on the App cluster. Use `->onOneServer()` on tasks that must run once when the cluster has more than one replica.
+
+Cloud's startup and readiness health checks use the `/up` route from `bootstrap/app.php`.
+
+**Environment variables** to add yourself, as custom variables or linked secrets:
+
+```dotenv
+FLUX_USERNAME=your-email
+FLUX_LICENSE_KEY=your-license-key
+SESSION_DRIVER=database
+NIGHTWATCH_ENABLED=true
+FATHOM_SITE_ID=ABCDEFGH
+```
+
+Set `SESSION_DRIVER=redis` instead when a Valkey cache is attached. If the environment has no `APP_KEY`, add the output of `php artisan key:generate --show` too.
+
+Add only these variables, and `BROADCAST_CONNECTION` from [Real-time with Reverb](#real-time-with-reverb). Don't copy your local `.env` into Cloud or push it with `cloud deploy --push-env`: a variable you set replaces the one Cloud sets, so local values such as `DB_HOST`, `MAIL_MAILER=log` and `LOG_STACK` would replace Cloud's database, mail and log settings.
+
+**Cloud CLI.** To deploy and manage Cloud from the terminal, and for the `deploying-to-cloud` agent skill, install the [Cloud CLI](https://cloud.laravel.com/docs/api/cli) globally:
+
+```bash
+composer global require laravel/cloud-cli
+cloud auth
+cloud deploy
+```
+
+## Real-time with Reverb
+
+When a project needs WebSockets, run these in a terminal and accept the defaults:
+
+```bash
+php artisan install:broadcasting --reverb
+BROADCAST_CONNECTION=null php artisan reverb:install
+npm run build
+```
+
+The first command prints a `Failed to create broadcaster for connection "reverb"` error; the second command writes the missing Reverb settings to `.env`.
+
+Together they install `laravel/reverb`, `laravel-echo` and `pusher-js`, add `config/broadcasting.php`, `config/reverb.php`, `routes/channels.php` and `resources/js/echo.js`, and set `BROADCAST_CONNECTION=reverb` and the `REVERB_*` and `VITE_REVERB_*` variables in `.env`. `composer dev` then also runs `php artisan reverb:start`. Commit the files they add and change.
+
+On Laravel Cloud:
+
+1. Attach WebSockets to the environment (**Add resource → WebSockets**). Cloud sets the `REVERB_*` and `VITE_REVERB_*` variables.
+2. Then add `BROADCAST_CONNECTION=reverb` to the environment's variables and deploy. Add it only after WebSockets is attached.
+
 ## Rector
 
 `rector.php` runs on `app`, `bootstrap/app.php`, `config`, `database`, `public`, `routes` and `tests`, and applies:
@@ -164,11 +239,11 @@ Nightwatch only sends data while its agent runs next to your app, so keep `php a
 
 - **MCP server** (`php artisan boost:mcp`): tools to search the docs for the installed package versions (`search-docs`), read the database schema, run read-only queries, read the app and browser logs and the last error, and resolve app URLs.
 - **Guidelines** for the installed versions of Laravel, Livewire, Pest and Pint, in `AGENTS.md` (Amp, Codex) and `CLAUDE.md` (Claude Code). Add your own instructions outside the `<laravel-boost-guidelines>` tags; Boost only rewrites what's inside them.
-- **Skills** in `.agents/skills/` (Amp, Codex) and `.claude/skills/` (Claude Code): `laravel-best-practices`, `testing-best-practices`, `livewire-development`, `fluxui-development`, `tailwindcss-development`, `blaze-optimize`, `configure-nightwatch` and `infer-conventions`.
+- **Skills** in `.agents/skills/` (Amp, Codex) and `.claude/skills/` (Claude Code): `laravel-best-practices`, `testing-best-practices`, `livewire-development`, `fluxui-development`, `tailwindcss-development`, `blaze-optimize`, `configure-nightwatch`, `deploying-to-cloud` and `infer-conventions`.
 
 | File | Contents |
 | --- | --- |
-| `boost.json` | The configured agents, skills and integrations (Laravel Cloud, Nightwatch MCP and Sail are off) |
+| `boost.json` | The configured agents, skills and integrations (Laravel Cloud is on; Nightwatch MCP and Sail are off) |
 | `config/boost.php` | `enforce_tests`, which keeps Boost's test-writing guidelines in `AGENTS.md` and `CLAUDE.md` |
 | `.mcp.json`, `.amp/settings.json`, `.codex/config.toml` | The MCP server for Claude Code, Amp and Codex |
 

@@ -16,9 +16,11 @@
     },
     "require": {
         "php": "^8.4",
-        "laravel/framework": "^13.17",
+        "aws/aws-sdk-php": "^3.403",
+        "laravel/framework": "^13.19",
         "laravel/nightwatch": "^1.30",
         "laravel/tinker": "^3.0",
+        "league/flysystem-aws-s3-v3": "^3.35",
         "livewire/blaze": "^1.0",
         "livewire/flux": "^2.13.1",
         "livewire/flux-pro": "^2.21",
