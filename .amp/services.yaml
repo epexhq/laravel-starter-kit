@@ -2,3 +2,29 @@ services:
   postgres:
     command: exec /usr/lib/postgresql/18/bin/postgres -D "$HOME/.local/share/postgresql"
     port: 5432
+  valkey:
+    command: exec valkey-server --bind 127.0.0.1 --port 6379 --save '' --appendonly no
+    port: 6379
+  mailpit:
+    command: exec mailpit --listen "127.0.0.1:$PORT" --smtp 127.0.0.1:1025
+    portal:
+      title: Mailpit
+    review: false
+  rustfs:
+    command: >-
+      exec rustfs server --address 127.0.0.1:9000 --console-enable --console-address "127.0.0.1:$PORT"
+      "$HOME/.local/share/rustfs"
+    env:
+      RUSTFS_ACCESS_KEY: orb
+      RUSTFS_SECRET_KEY: orb-secret
+    portal:
+      url: /rustfs/console/
+      title: RustFS
+      description: Sign in with orb / orb-secret.
+    review: false
+  typesense:
+    command: >-
+      exec typesense-server --data-dir "$HOME/.local/share/typesense" --api-key orb
+      --listen-address 127.0.0.1 --api-port 8108
+    port: 8108
+    health: /health
