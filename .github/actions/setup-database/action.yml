@@ -1,15 +1,9 @@
 name: Setup database
-description: Starts the PostgreSQL server that autofix and the tests run against.
+description: SQLite needs no server. The app uses database/database.sqlite and the tests use an in-memory database.
 
 runs:
   using: composite
   steps:
-    - name: Start PostgreSQL
+    - name: SQLite needs no server
       shell: bash
-      run: |
-        docker run --detach --name postgres --publish 5432:5432 \
-          --env POSTGRES_HOST_AUTH_METHOD=trust postgres:18
-
-        # The image initializes the database with a temporary server that doesn't listen on
-        # TCP, then restarts it, so wait until the final server accepts TCP connections.
-        timeout 120 bash -c 'until docker exec postgres pg_isready --host 127.0.0.1 --quiet; do sleep 1; done'
+      run: echo 'SQLite needs no server.'
