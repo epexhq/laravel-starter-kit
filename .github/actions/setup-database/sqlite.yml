@@ -1,0 +1,9 @@
+name: Setup database
+description: SQLite needs no server. The app uses database/database.sqlite and the tests use an in-memory database.
+
+runs:
+  using: composite
+  steps:
+    - name: SQLite needs no server
+      shell: bash
+      run: echo 'SQLite needs no server.'
