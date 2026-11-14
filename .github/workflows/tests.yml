@@ -17,7 +17,8 @@ jobs:
       contents: read
 
     env:
-      # Flux Pro is installed from composer.fluxui.dev with the license in the repository secrets.
+      # Flux Pro is installed from composer.fluxui.dev with the license in the repository secrets
+      # (Actions secrets, and Dependabot secrets for Dependabot pull requests).
       COMPOSER_AUTH: '{"http-basic":{"composer.fluxui.dev":{"username":"${{ secrets.FLUX_USERNAME }}","password":"${{ secrets.FLUX_LICENSE_KEY }}"}}}'
 
     strategy:

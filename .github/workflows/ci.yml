@@ -26,7 +26,6 @@ jobs:
 
   larastan:
     needs: autofix
-    if: ${{ !cancelled() }}
     uses: ./.github/workflows/larastan.yml
     secrets: inherit
     with:
@@ -34,7 +33,6 @@ jobs:
 
   tests:
     needs: autofix
-    if: ${{ !cancelled() }}
     uses: ./.github/workflows/tests.yml
     secrets: inherit
     with:

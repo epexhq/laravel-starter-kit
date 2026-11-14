@@ -16,11 +16,9 @@ jobs:
       sha: ${{ steps.commit.outputs.sha }}
 
     env:
-      # Fixes are committed back for pushes and same-repository pull requests. Pull requests
-      # from forks only get a read-only token, so there the job fails on any diff instead.
-      CAN_PUSH: ${{ github.event_name == 'push' || github.event.pull_request.head.repo.full_name == github.repository }}
       BRANCH: ${{ github.head_ref || github.ref_name }}
-      # Flux Pro is installed from composer.fluxui.dev with the license in the repository secrets.
+      # Flux Pro is installed from composer.fluxui.dev with the license in the repository secrets
+      # (Actions secrets, and Dependabot secrets for Dependabot pull requests).
       COMPOSER_AUTH: '{"http-basic":{"composer.fluxui.dev":{"username":"${{ secrets.FLUX_USERNAME }}","password":"${{ secrets.FLUX_LICENSE_KEY }}"}}}'
 
     steps:
@@ -28,7 +26,6 @@ jobs:
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           ref: ${{ github.event.pull_request.head.sha || github.sha }}
-          persist-credentials: ${{ env.CAN_PUSH }}
 
       - name: Start the database
         uses: ./.github/actions/setup-database
@@ -71,12 +68,6 @@ jobs:
           fi
 
           git diff --cached --stat
-
-          if [ "$CAN_PUSH" != "true" ]; then
-            git diff --cached
-            echo "::error::Rector, IDE Helper or Pint changed files. Run 'composer refactor', 'composer ide-helper' and 'composer lint', then push the result."
-            exit 1
-          fi
 
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
