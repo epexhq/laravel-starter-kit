@@ -1,26 +1,26 @@
 # Laravel Starter Kit
 
-An opinionated Laravel starter kit built on the official [Laravel Livewire starter kit](https://github.com/laravel/livewire-starter-kit). It keeps everything that kit ships (authentication with Fortify, including two-factor and passkeys, profile and security settings, and the Flux UI layouts) and adds a strict quality toolchain, Resend for email, and Laravel Nightwatch.
+A Laravel starter kit based on the official [Laravel Livewire starter kit](https://github.com/laravel/livewire-starter-kit). It includes authentication with Fortify (two-factor and passkeys), profile and security settings, and Flux UI layouts, plus a strict quality toolchain, Resend for email, and Laravel Nightwatch.
 
 ## What's included
 
 | Area | Package | Notes |
 | --- | --- | --- |
-| Framework | Laravel 13, Livewire 4 | From the official Livewire starter kit |
-| UI | [Flux](https://fluxui.dev) (free edition), Tailwind CSS 4 | No Flux Pro license needed |
+| Framework | Laravel 13, Livewire 4 | |
+| UI | [Flux](https://fluxui.dev) (free edition), Tailwind CSS 4 | |
 | Auth | Laravel Fortify | Login, registration, email verification, password reset, 2FA, passkeys |
 | Testing | [Pest 5](https://pestphp.com) | Parallel, time-balanced sharding, Test Impact Analysis |
-| Formatting | [Laravel Pint](https://laravel.com/docs/pint) | `laravel` preset, defaults only |
-| Refactoring | [Rector](https://getrector.com) + [rector-laravel](https://github.com/driftingly/rector-laravel) + Pest's Rector plugin | See [Rector configuration](#rector-configuration) |
+| Formatting | [Laravel Pint](https://laravel.com/docs/pint) | `laravel` preset |
+| Refactoring | [Rector](https://getrector.com) + [rector-laravel](https://github.com/driftingly/rector-laravel) + Pest's Rector plugin | See [Rector](#rector) |
 | Static analysis | [Larastan](https://github.com/larastan/larastan) | `level: max` |
-| IDE support | [barryvdh/laravel-ide-helper](https://github.com/barryvdh/laravel-ide-helper) | Model docblocks are written to the models |
+| IDE support | [barryvdh/laravel-ide-helper](https://github.com/barryvdh/laravel-ide-helper) | Model docs in `_ide_helper_models.php` |
 | Email | [Resend](https://resend.com) (`resend/resend-php`) | Default mailer in `config/mail.php` |
 | Monitoring | [Laravel Nightwatch](https://nightwatch.laravel.com) | `config/nightwatch.php` published, disabled until you enable it |
-| Coding agents | `laravel-best-practices` skill | From Nuno Maduro's starter kit; see [Agent skill](#agent-skill-laravel-best-practices) |
+| Coding agents | `laravel-best-practices` skill | See [Agent skill](#agent-skill-laravel-best-practices) |
 
 ## Requirements
 
-- PHP 8.4 or newer (Pest 5 requires it)
+- PHP 8.4 or newer
 - Composer 2
 - Node.js 22 and npm
 - To create a project with `laravel new --using`: the Laravel installer (tested with 5.33) and `npx`
@@ -34,7 +34,7 @@ Create a new project from this repository with the [Laravel installer](https://l
 laravel new my-app --using=https://github.com/epexhq/laravel-starter-kit
 ```
 
-The kit is not published on Packagist, so pass the full GitHub URL; the installer then downloads the repository with `npx tiged`. It creates `.env`, generates the app key, creates the SQLite database and runs the migrations, and asks whether to install and build the frontend.
+The installer downloads the repository, creates `.env`, generates the app key, creates the SQLite database, runs the migrations, and asks whether to install and build the frontend.
 
 Or clone it and run the setup script, which installs dependencies, creates `.env` from `.env.example`, generates the app key, runs the migrations (SQLite by default) and builds the frontend:
 
@@ -61,32 +61,27 @@ composer dev
 | `composer refactor` / `refactor:check` | Rector, applying changes or as a dry run. |
 | `composer lint` / `lint:check` | Pint, fixing or checking. |
 | `composer types:check` | Larastan at max level. |
-| `composer ide-helper` | Regenerates `_ide_helper.php`, `.phpstorm.meta.php` and model docblocks, then runs Pint. Run it after adding models or migrations. |
-| `composer setup` / `composer dev` | Same as the official starter kit. |
+| `composer ide-helper` | Regenerates `_ide_helper.php`, `.phpstorm.meta.php` and `_ide_helper_models.php`. Needs a migrated database. |
+| `composer setup` | Installs dependencies, creates `.env`, generates the app key and IDE helper files, runs the migrations and builds the frontend. |
+| `composer dev` | Runs the app server, queue worker, log viewer and Vite together. |
 
-`_ide_helper.php` and `.phpstorm.meta.php` are git-ignored. `composer setup` generates them; run `composer ide-helper` to refresh them after `composer update` or schema changes. (They aren't regenerated in `post-update-cmd`, because ide-helper is a dev dependency and that hook would break `composer update --no-dev`.) Model docblocks are committed, because they are what Larastan and your editor read.
+`_ide_helper_models.php` holds the model docs and is committed; CI regenerates it (see [Continuous integration](#continuous-integration)). `_ide_helper.php` and `.phpstorm.meta.php` are git-ignored; run `composer ide-helper` after `composer update` to refresh them.
 
 ## Fast tests
-
-The suite is set up to run as fast as Pest allows:
 
 - **Parallel:** `composer test` runs `pest --parallel`, one process per CPU core.
 - **Test Impact Analysis (TIA):** `tests/Pest.php` enables `pest()->tia()->locally()`. On your machine, Pest re-runs only the tests affected by your changes and replays the rest from cache. The first run records the dependency graph and needs PCOV or Xdebug. TIA also needs a git repository with at least one commit, so it stays off (and the full suite runs) until you make your first commit. Use `--no-tia` for a full run, or `--tia --fresh` to re-record the graph. With `--ci`, TIA is off and the full suite runs.
 - **Sharding:** CI splits the suite into two shards (`pest --ci --parallel --shard=N/2`), balanced by the timings in `tests/.pest/shards.json`. Refresh the timings with `./vendor/bin/pest --parallel --no-tia --update-shards` as the suite grows, and change the shard count in `.github/workflows/tests.yml`.
 
-TIA can also download a dependency graph recorded by CI so a fresh clone replays immediately. That needs a `tia-baseline.yml` workflow and `pest()->tia()->baselined()`, which this kit does not enable: until the workflow has produced an artifact, `baselined()` fails the run. See [Sharing the baseline from CI](https://pestphp.com/docs/tia).
-
-`brianium/paratest` is pinned to `~7.27.5` because ParaTest 7.28 breaks `pest --parallel` in Pest 5.3.5. Pest has fixed this on its 5.x branch ([pestphp/pest#2025](https://github.com/pestphp/pest/pull/2025)); remove the pin once a Pest release includes it.
-
 ## Continuous integration
 
 `.github/workflows/ci.yml` runs on pushes to `main` and on pull requests. It calls three workflows in order:
 
-1. **Autofix** (`autofix.yml`) runs Rector and Pint in fix mode. If they change anything, it commits the fixes as `github-actions[bot]` and pushes them back to the branch. For pull requests from forks, which it cannot push to, it fails and prints the diff instead.
+1. **Autofix** (`autofix.yml`) runs Rector, then IDE Helper against a migrated PostgreSQL database, then Pint. If anything changed, it commits the result as `github-actions[bot]` and pushes it back to the branch. On pull requests from forks it fails and prints the diff instead.
 2. **Larastan** (`larastan.yml`) at max level, check only.
-3. **Tests** (`tests.yml`) in two time-balanced shards.
+3. **Tests** (`tests.yml`) against PostgreSQL, in two time-balanced shards.
 
-Larastan and the tests start only after autofix finishes, and they check out the autofix commit when there is one, so they always run on the fixed code. A push made with the workflow's `GITHUB_TOKEN` does not start another run on its own, so autofix cannot loop. On a pull request, GitHub instead shows the autofix commit's `ci` run as awaiting approval. You can ignore it, because the run that made the commit already checked that code. Approving it runs CI again on the fixed commit, and autofix finds nothing more to fix. Pull your branch after an autofix commit before pushing again; otherwise your push is rejected as non-fast-forward.
+Larastan and the tests start after autofix finishes and run on the autofix commit when there is one. The autofix commit doesn't start a new CI run; on a pull request it shows a `ci` run awaiting approval, which you can ignore. After an autofix commit, pull the branch before pushing again.
 
 ## Email with Resend
 
@@ -109,15 +104,14 @@ NIGHTWATCH_TOKEN=your-environment-token
 
 Nightwatch only sends data while its agent runs next to your app, so keep `php artisan nightwatch:agent` running under a process monitor (Laravel Cloud and Forge can do this for you). `LOG_STACK=single,nightwatch` in `.env.example` also sends logs to Nightwatch once it's enabled. Nightwatch is disabled in tests through `phpunit.xml`.
 
-## Rector configuration
+## Rector
 
-`rector.php` combines the setups of three people who publish their Laravel Rector configs:
+`rector.php` runs on `app`, `bootstrap/app.php`, `config`, `database`, `public`, `routes` and `tests`, and applies:
 
-- **Nuno Maduro** ([nunomaduro/laravel-starter-kit](https://github.com/nunomaduro/laravel-starter-kit)): the paths, the six prepared sets (dead code, code quality, coding style, type declarations, privatization, early return), `withPhpSets()`, the ten opt-in `LaravelSetList` quality sets, `withImportNames(removeUnusedImports: true)`, and skipping the rules that add `#[\Override]` to properties and align inherited method visibility. (Nuno also skips the methods variant of the `#[\Override]` rule; Rector 2.8 deprecated it and no longer registers it, so the kit leaves it out.)
-- **Caleb White** ([calebdw](https://github.com/calebdw)): he doesn't publish an app `rector.php`, but he maintains much of rector-laravel. From that work the kit takes `withComposerBased(laravel: true)`, which applies the Laravel, Livewire and Faker upgrade sets up to the installed versions, instead of the deprecated `LaravelLevelSetList` and the removed `LaravelSetProvider`.
-- **Josh Cirre** ([joshcirre/fission](https://github.com/joshcirre/fission), a Livewire and Flux starter kit): `PestSetList::CODING_STYLE` from Pest's first-party Rector plugin, which turns PHPUnit assertions into Pest expectations.
-
-The kit adds two skips of its own: `SafeDeclareStrictTypesRector`, because Laravel's own files don't declare strict types, and `RenameClassRector` in `app/Models`, so Rector doesn't rewrite ide-helper's `@mixin \Eloquent` and regenerating docblocks stays stable.
+- the PHP version sets for the version in `composer.json`
+- the dead code, code quality, coding style, type declaration, privatization and early return sets
+- rector-laravel's upgrade sets for the installed Laravel, Livewire and Faker versions, and its Laravel code quality sets
+- Pest's coding style set, which turns PHPUnit assertions into Pest expectations
 
 ## Agent skill: Laravel best practices
 
@@ -132,15 +126,6 @@ Local changes to the upstream files (re-apply them when syncing a newer upstream
 - `SKILL.md` and `rules/style.md`: the three references to `search-docs`, a Laravel Boost MCP tool this kit doesn't install, point to the [Laravel 13 docs](https://laravel.com/docs/13.x) instead.
 - `rules/style.md`: the two `'App\Models\User'` examples contained NUL bytes where `\U` had been mangled upstream (which also made Git treat the file as binary), and the `strrchr()` example's `'\'` is now `'\\'`.
 - `LICENSE.md` added.
-
-The skill's testing rule recommends `LazilyRefreshDatabase`, while this kit's `tests/Pest.php` uses `RefreshDatabase`; the skill's "Consistency First" rule tells agents to follow the existing pattern, so it was left as is.
-
-## Differences from the official Livewire starter kit
-
-- Tests are written in Pest's function syntax. The official kit's installer converts them with Pest Drift; that step had failed when this kit was generated, so it was redone by hand.
-- Larastan runs at `level: max` instead of 7. Three type fixes in `app/Providers/FortifyServiceProvider.php` and `config/fortify.php` (typed request input and config reads), plus two `(string)` casts in the published `config/nightwatch.php`, make it pass.
-- `composer test` only runs the tests; checks moved into `qa` and `ci:check`.
-- CI is split into autofix (Rector and Pint commit their fixes), Larastan, and two test shards; see [Continuous integration](#continuous-integration).
 
 ## License
 

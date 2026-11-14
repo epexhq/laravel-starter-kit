@@ -4,13 +4,29 @@ on:
   workflow_call:
     outputs:
       sha:
-        description: The commit autofix pushed, or empty when nothing needed fixing.
+        description: The commit autofix pushed, or empty when nothing changed.
         value: ${{ jobs.autofix.outputs.sha }}
 
 jobs:
   autofix:
-    name: Rector and Pint
+    name: Rector, IDE Helper and Pint
     runs-on: ubuntu-latest
+
+    # IDE Helper reads the model columns from a migrated database.
+    services:
+      postgres:
+        image: postgres:18
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: laravel
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
 
     outputs:
       sha: ${{ steps.commit.outputs.sha }}
@@ -20,6 +36,12 @@ jobs:
       # from forks only get a read-only token, so there the job fails on any diff instead.
       CAN_PUSH: ${{ github.event_name == 'push' || github.event.pull_request.head.repo.full_name == github.repository }}
       BRANCH: ${{ github.head_ref || github.ref_name }}
+      DB_CONNECTION: pgsql
+      DB_HOST: 127.0.0.1
+      DB_PORT: 5432
+      DB_DATABASE: laravel
+      DB_USERNAME: postgres
+      DB_PASSWORD: postgres
 
     steps:
       - name: Checkout code
@@ -32,6 +54,7 @@ jobs:
         uses: shivammathur/setup-php@eb7c497e18156a6bbabfef1d3a82760b9eda3962 # v2
         with:
           php-version: '8.4'
+          extensions: pdo_pgsql
           tools: composer:v2
           coverage: none
 
@@ -41,27 +64,38 @@ jobs:
       - name: Rector
         run: composer refactor
 
+      - name: Migrate database
+        run: |
+          cp .env.example .env
+          php artisan key:generate
+          php artisan migrate --force
+
+      - name: IDE Helper
+        run: composer ide-helper
+
       - name: Pint
         run: composer lint
 
       - name: Commit fixes
         id: commit
         run: |
-          if git diff --quiet; then
-            echo "Rector and Pint made no changes."
+          git add --all
+
+          if git diff --cached --quiet; then
+            echo "Rector, IDE Helper and Pint made no changes."
             exit 0
           fi
 
-          git diff --stat
+          git diff --cached --stat
 
           if [ "$CAN_PUSH" != "true" ]; then
-            git diff
-            echo "::error::Rector or Pint changed files. Run 'composer refactor' and 'composer lint', then push the result."
+            git diff --cached
+            echo "::error::Rector, IDE Helper or Pint changed files. Run 'composer refactor', 'composer ide-helper' and 'composer lint', then push the result."
             exit 1
           fi
 
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git commit --all --quiet --message 'Apply Rector and Pint fixes'
+          git commit --quiet --message 'Apply Rector, IDE Helper and Pint fixes'
           git push origin "HEAD:refs/heads/$BRANCH"
           echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"

@@ -6,7 +6,6 @@ use Pest\Rector\Set\PestSetList;
 use Rector\CodingStyle\Rector\ClassMethod\MakeInheritedMethodVisibilitySameAsParentRector;
 use Rector\Config\RectorConfig;
 use Rector\Php85\Rector\Property\AddOverrideAttributeToOverriddenPropertiesRector;
-use Rector\Renaming\Rector\Name\RenameClassRector;
 use Rector\TypeDeclaration\Rector\StmtsAwareInterface\SafeDeclareStrictTypesRector;
 use RectorLaravel\Set\LaravelSetList;
 
@@ -50,6 +49,4 @@ return RectorConfig::configure()
         MakeInheritedMethodVisibilitySameAsParentRector::class,
         // Laravel's own code style does not use strict types; adding them to only some files is worse.
         SafeDeclareStrictTypesRector::class,
-        // Keep laravel-ide-helper's `@mixin \Eloquent` so re-running `composer ide-helper` stays idempotent.
-        RenameClassRector::class => [__DIR__.'/app/Models'],
     ]);
