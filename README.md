@@ -110,7 +110,7 @@ composer dev
 
 - **Database:** `phpunit.xml` sets `APP_ENV=testing`, so tests run against the app's database name with `_testing` appended (`config/database.php`), such as `laravel_testing`. In parallel runs each process gets its own `laravel_testing_test_N` copy.
 - **No frontend build needed:** `tests/TestCase.php` calls `withoutVite()`, so the tests pass without `npm run build`.
-- **Parallel:** `composer test` runs `pest --parallel`, one process per CPU core. `brianium/paratest` is pinned to 7.27 in `composer.json` because Pest 5.3 fails with ParaTest 7.28. Remove the pin when a Pest release supports 7.28.
+- **Parallel:** `composer test` runs `pest --parallel`, one process per CPU core.
 - **Test location:** `phpunit.xml` runs every `*Test.php` file under `tests/`, including unit tests made with `php artisan make:test --unit`.
 - **Test Impact Analysis (TIA):** `tests/Pest.php` enables `pest()->tia()->locally()`. On your machine, Pest re-runs only the tests affected by your changes and replays the rest from cache. The first run records the dependency graph and needs PCOV or Xdebug. TIA also needs a git repository with at least one commit, so it stays off (and the full suite runs) until you make your first commit. Use `--no-tia` for a full run, or `--tia --fresh` to re-record the graph. With `--ci`, TIA is off and the full suite runs.
 - **Sharding:** CI splits the suite into two shards (`pest --ci --parallel --shard=N/2`), balanced by the timings in `tests/.pest/shards.json`. Refresh the timings with `./vendor/bin/pest --parallel --no-tia --update-shards` as the suite grows, and change the shard count in `.github/workflows/tests.yml`.
