@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "81828dd024d21ccc97d6a7a96efe3e89",
+    "content-hash": "cf65450f4327200c1eb0d8d818bf1b3a",
     "packages": [
         {
             "name": "aws/aws-crt-php",
@@ -7857,6 +7857,75 @@
             ],
             "time": "2026-11-14T20:49:33+00:00",
             "published-time": "2026-11-14T20:50:36+00:00"
+        },
+        {
+            "name": "calebdw/larastan-livewire",
+            "version": "v2.6.0",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/calebdw/larastan-livewire.git",
+                "reference": "5f6d1665d57ba9f422e6b78f00eab0e1313e9505"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/calebdw/larastan-livewire/zipball/5f6d1665d57ba9f422e6b78f00eab0e1313e9505",
+                "reference": "5f6d1665d57ba9f422e6b78f00eab0e1313e9505",
+                "shasum": ""
+            },
+            "require": {
+                "illuminate/support": "^10.0 || ^11.0 || ^12.0 || ^13.0",
+                "illuminate/view": "^10.0 || ^11.0 || ^12.0 || ^13.0",
+                "livewire/livewire": "^3.3 || ^4.0",
+                "php": "^8.2",
+                "phpstan/phpstan": "^2.0"
+            },
+            "require-dev": {
+                "boundwize/structarmed": "^0.19.3",
+                "phpunit/phpunit": "^11.5 || ^12.5 || ^13.4"
+            },
+            "type": "phpstan-extension",
+            "extra": {
+                "phpstan": {
+                    "includes": [
+                        "extension.neon"
+                    ]
+                }
+            },
+            "autoload": {
+                "psr-4": {
+                    "CalebDW\\LarastanLivewire\\": "src/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Caleb White",
+                    "email": "cdwhite3@pm.me"
+                }
+            ],
+            "description": "A Larastan / PHPStan extension for Livewire.",
+            "homepage": "https://github.com/calebdw/larastan-livewire",
+            "keywords": [
+                "PHPStan",
+                "larastan",
+                "livewire",
+                "static analysis"
+            ],
+            "support": {
+                "issues": "https://github.com/calebdw/larastan-livewire/issues",
+                "source": "https://github.com/calebdw/larastan-livewire/tree/v2.6.0"
+            },
+            "funding": [
+                {
+                    "url": "https://github.com/calebdw",
+                    "type": "github"
+                }
+            ],
+            "time": "2026-11-02T15:09:15+00:00",
+            "published-time": "2026-11-02T15:09:58+00:00"
         },
         {
             "name": "composer/class-map-generator",

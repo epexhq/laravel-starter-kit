@@ -13,7 +13,7 @@ A Laravel starter kit: an empty Laravel app on PostgreSQL with Livewire, Flux, a
 | Testing | [Pest 5](https://pestphp.com) | Parallel, time-balanced CI shards, an architecture test, and Test Impact Analysis on demand (`composer test:tia`) |
 | Formatting | [Laravel Pint](https://laravel.com/docs/pint) | `laravel` preset |
 | Refactoring | [Rector](https://getrector.com) + [rector-laravel](https://github.com/driftingly/rector-laravel) + Pest's Rector plugin | See [Rector](#rector) |
-| Static analysis | [Larastan](https://github.com/larastan/larastan) | `level: max` |
+| Static analysis | [Larastan](https://github.com/larastan/larastan) + [larastan-livewire](https://github.com/calebdw/larastan-livewire) | `level: max`; larastan-livewire types Livewire's computed properties and `Livewire::test()` |
 | IDE support | [barryvdh/laravel-ide-helper](https://github.com/barryvdh/laravel-ide-helper) | Model docs in `_ide_helper_models.php` |
 | Email | [Resend](https://resend.com) (`resend/resend-php`) | Default mailer in `config/mail.php` |
 | Analytics | [Fathom Analytics](https://usefathom.com) | Off until `FATHOM_SITE_ID` is set; see [Analytics with Fathom](#analytics-with-fathom) |
