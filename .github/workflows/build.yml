@@ -1,0 +1,43 @@
+name: build
+
+on:
+  workflow_call:
+    inputs:
+      ref:
+        description: The commit to build; empty means the commit that triggered the run.
+        type: string
+        default: ''
+
+jobs:
+  build:
+    name: Frontend build
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ inputs.ref }}
+          persist-credentials: false
+
+      # resources/css/app.css imports Flux's CSS from vendor/.
+      - name: Setup PHP
+        uses: ./.github/actions/setup-php
+
+      - name: Install Composer dependencies
+        run: composer install --no-interaction --prefer-dist
+
+      - name: Setup Node
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: '22'
+          cache: npm
+
+      - name: Install npm dependencies
+        run: npm ci --no-audit --no-fund
+
+      - name: Build
+        run: npm run build

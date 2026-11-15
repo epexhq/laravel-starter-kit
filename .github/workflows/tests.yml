@@ -16,9 +16,6 @@ jobs:
     permissions:
       contents: read
 
-    env:
-      COMPOSER_AUTH: '{"http-basic":{"composer.fluxui.dev":{"username":"${{ secrets.FLUX_USERNAME }}","password":"${{ secrets.FLUX_LICENSE_KEY }}"}}}'
-
     strategy:
       fail-fast: false
       matrix:
@@ -40,15 +37,15 @@ jobs:
       - name: Install Composer dependencies
         run: composer install --no-interaction --prefer-dist
 
-      # The tests need no frontend build (withoutVite() in tests/TestCase.php), only their database.
+      # The tests need no frontend build (withoutVite() in tests/TestCase.php; build.yml checks it), only their database.
       - name: Setup Application
         run: |
           cp .env.example .env
           php artisan key:generate
           composer setup:test-database
 
-      # --ci runs the full suite (no TIA replay); shards are time-balanced by tests/.pest/shards.json.
+      # Shards are time-balanced by tests/.pest/shards.json.
       - name: Run tests
         run: |
           git log -1 --format='Testing %H %s'
-          ./vendor/bin/pest --ci --parallel --shard=${{ matrix.shard }}/2
+          ./vendor/bin/pest --parallel --shard=${{ matrix.shard }}/2

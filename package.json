@@ -1,5 +1,6 @@
 {
     "$schema": "https://www.schemastore.org/package.json",
+    "name": "app",
     "private": true,
     "type": "module",
     "scripts": {
@@ -15,9 +16,7 @@
         "vite-plus": "1.4.0"
     },
     "optionalDependencies": {
-        "@laravel/multiplex": "^0.4.1",
-        "@tailwindcss/oxide-linux-x64-gnu": "^4.0.1",
-        "lightningcss-linux-x64-gnu": "^1.29.1"
+        "@laravel/multiplex": "^0.4.1"
     },
     "overrides": {
         "vite": "npm:@voidzero-dev/vite-plus-core@1.4.0"

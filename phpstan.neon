@@ -9,5 +9,9 @@ parameters:
         - config/
         - database/
         - routes/
+        - tests/
 
     level: max
+
+    # Type model attributes from the casts() method, so a `datetime` cast is a Carbon instance.
+    parseModelCastsMethod: true

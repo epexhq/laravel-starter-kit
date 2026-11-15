@@ -1,7 +1,6 @@
 #!/usr/bin/env bash
 # Prepares an Amp orb (Debian) for this repository: PHP 8.4, PostgreSQL 18, Valkey, Mailpit, RustFS,
-# Typesense and Composer, and the orb's .env, then the dependencies and both databases when the
-# Flux Pro license is available.
+# Typesense and Composer, the orb's .env, the dependencies, the frontend build and both databases.
 set -euo pipefail
 
 step() { printf '\n==> %s\n' "$*"; }
@@ -121,20 +120,10 @@ if ! grep -q '^# Orb services' .env; then
   printf '%s\n' "${orb_env[@]}" >> .env
 fi
 
-# Flux Pro needs the license: FLUX_USERNAME and FLUX_LICENSE_KEY as project secrets, or COMPOSER_AUTH.
-if [ -z "${COMPOSER_AUTH:-}" ] && [ -n "${FLUX_USERNAME:-}" ] && [ -n "${FLUX_LICENSE_KEY:-}" ]; then
-  COMPOSER_AUTH=$(printf '{"http-basic":{"composer.fluxui.dev":{"username":"%s","password":"%s"}}}' "$FLUX_USERNAME" "$FLUX_LICENSE_KEY")
-  export COMPOSER_AUTH
-fi
-
-if [ -z "${COMPOSER_AUTH:-}" ]; then
-  step 'Skipping dependencies: set FLUX_USERNAME and FLUX_LICENSE_KEY as project secrets, then run composer setup'
-  exit 0
-fi
-
 step 'Installing dependencies'
 composer install --no-interaction --prefer-dist --no-progress
 npm ci --no-audit --no-fund
+npm run build
 
 grep -q '^APP_KEY=base64:' .env || php artisan key:generate --ansi
 
