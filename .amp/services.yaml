@@ -1,4 +1,8 @@
 services:
+  app:
+    command: exec php artisan serve --host=127.0.0.1 --port="$PORT"
+    portal:
+      title: App
   postgres:
     command: exec /usr/lib/postgresql/18/bin/postgres -D "$HOME/.local/share/postgresql"
     port: 5432

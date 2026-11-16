@@ -1,0 +1,74 @@
+<?php
+
+namespace Livewire\Features\SupportValidation;
+
+trait TestsValidation
+{
+    /** @return $this */
+    public function assertHasErrors($keys = []);
+
+    /** @return $this */
+    public function assertOnlyHasErrors($keys = []);
+
+    /** @return $this */
+    public function assertHasNoErrors($keys = []);
+}
+
+namespace Livewire\Features\SupportEvents;
+
+trait TestsEvents
+{
+    /** @return $this */
+    public function dispatch($event, ...$parameters);
+
+    /** @return $this */
+    public function fireEvent($event, ...$parameters);
+
+    /** @return $this */
+    public function assertDispatched($event, ...$params);
+
+    /** @return $this */
+    public function assertNotDispatched($event, ...$params);
+
+    /** @return $this */
+    public function assertDispatchedTo($target, $event, ...$params);
+}
+
+namespace Livewire\Features\SupportRedirects;
+
+trait TestsRedirects
+{
+    /** @return $this */
+    public function assertRedirect($uri = null);
+
+    /** @return $this */
+    public function assertRedirectContains($uri);
+
+    /** @return $this */
+    public function assertRedirectToRoute($name, $parameters = []);
+
+    /** @return $this */
+    public function assertNoRedirect();
+}
+
+namespace Livewire\Features\SupportJsEvaluation;
+
+trait TestsJsEvaluation
+{
+    /** @return $this */
+    public function assertJs(string $expression, ...$params);
+
+    /** @return $this */
+    public function assertNoJs();
+}
+
+namespace Livewire\Features\SupportFileDownloads;
+
+trait TestsFileDownloads
+{
+    /** @return $this */
+    public function assertFileDownloaded($filename = null, $content = null, $contentType = null);
+
+    /** @return $this */
+    public function assertNoFileDownloaded();
+}
