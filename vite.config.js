@@ -25,7 +25,9 @@ export default defineConfig({
         watch: {
             ignored: [
                 '**/.agents/**',
+                '**/.amp/**',
                 '**/.claude/**',
+                '**/.codex/**',
                 '**/storage/framework/views/**',
                 '**/vendor/**',
             ],

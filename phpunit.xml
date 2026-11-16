@@ -15,10 +15,13 @@
         </include>
     </source>
     <php>
-        <env name="APP_ENV" value="testing"/>
+        <!-- Forced, and set in $_SERVER too, so an exported APP_ENV or DB_URL can't point the tests at another database. -->
+        <env name="APP_ENV" value="testing" force="true"/>
+        <server name="APP_ENV" value="testing"/>
         <env name="CACHE_STORE" value="array"/>
         <env name="DB_CONNECTION" value="pgsql"/>
-        <env name="DB_URL" value=""/>
+        <env name="DB_URL" value="" force="true"/>
+        <server name="DB_URL" value=""/>
         <env name="FILESYSTEM_DISK" value="local"/>
         <env name="MAIL_MAILER" value="array"/>
         <env name="QUEUE_CONNECTION" value="sync"/>

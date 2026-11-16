@@ -1,19 +1,13 @@
 {
     "$schema": "https://getcomposer.org/schema.json",
-    "name": "epexhq/laravel-starter-kit",
+    "name": "laravel/laravel",
     "type": "project",
-    "description": "A Laravel Livewire + Flux Pro starter kit on PostgreSQL with Pest, Rector, Pint, Larastan (max), IDE Helper, Resend, Fathom, Nightwatch and Laravel Boost.",
+    "description": "A Laravel application.",
     "keywords": [
         "laravel",
         "framework"
     ],
     "license": "MIT",
-    "repositories": {
-        "flux-pro": {
-            "type": "composer",
-            "url": "https://composer.fluxui.dev"
-        }
-    },
     "require": {
         "php": "^8.4",
         "aws/aws-sdk-php": "^3.403",
@@ -24,13 +18,13 @@
         "league/flysystem-aws-s3-v3": "^3.35",
         "livewire/blaze": "^1.0",
         "livewire/flux": "^2.13.1",
-        "livewire/flux-pro": "^2.21",
         "livewire/livewire": "^4.1",
         "resend/resend-php": "^1.18",
         "typesense/typesense-php": "^6.0"
     },
     "require-dev": {
         "barryvdh/laravel-ide-helper": "^3.8",
+        "calebdw/larastan-livewire": "^2.6",
         "driftingly/rector-laravel": "^2.7",
         "fakerphp/faker": "^1.24",
         "larastan/larastan": "^3.9",
@@ -59,6 +53,7 @@
     },
     "scripts": {
         "setup": [
+            "Composer\\Config::disableProcessTimeout",
             "composer install",
             "@php -r \"file_exists('.env') || copy('.env.example', '.env');\"",
             "@php artisan key:generate",
@@ -74,6 +69,7 @@
         ],
         "setup:test-database": [
             "@putenv APP_ENV=testing",
+            "@putenv DB_URL=",
             "@php artisan migrate --force --ansi"
         ],
         "dev": [
@@ -101,6 +97,10 @@
         "test": [
             "@php artisan config:clear --ansi",
             "pest --parallel"
+        ],
+        "test:tia": [
+            "@php artisan config:clear --ansi",
+            "pest --parallel --tia"
         ],
         "qa": [
             "Composer\\Config::disableProcessTimeout",

@@ -13,31 +13,46 @@ concurrency:
   group: ci-${{ github.head_ref || github.ref }}
   cancel-in-progress: true
 
-# Autofix runs first. Larastan and the tests then run on the code autofix produced: its
-# commit when it pushed one, otherwise the commit that triggered this run. A push made
-# with GITHUB_TOKEN starts no new run on its own (on a pull request GitHub only queues one
-# that waits for approval), and a rerun finds nothing to fix, so autofix cannot loop.
+# On pull requests from branches of this repository, autofix applies Rector, IDE Helper and
+# Pint, commits any change and pushes it to the branch. Pushes to main and pull requests from
+# forks run the same tools in check mode instead, which fail when anything would change.
 #
-# Each workflow installs Flux Pro from composer.fluxui.dev with the FLUX_USERNAME and
-# FLUX_LICENSE_KEY secrets passed by `secrets: inherit` (Actions secrets, and Dependabot
-# secrets for Dependabot pull requests).
+# Larastan, the tests and the frontend build then run on the code autofix produced: its commit
+# when it pushed one, otherwise the commit that triggered this run. A push made with
+# GITHUB_TOKEN starts no new run on its own (on a pull request GitHub only queues one that
+# waits for approval), and a rerun finds nothing to fix, so autofix cannot loop.
 jobs:
   autofix:
+    if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository
     uses: ./.github/workflows/autofix.yml
-    secrets: inherit
+    with:
+      fix: true
     permissions:
       contents: write
 
+  check:
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name != github.repository
+    uses: ./.github/workflows/autofix.yml
+    with:
+      fix: false
+
   larastan:
-    needs: autofix
+    needs: [autofix, check]
+    if: ${{ !cancelled() && !failure() }}
     uses: ./.github/workflows/larastan.yml
-    secrets: inherit
     with:
       ref: ${{ needs.autofix.outputs.sha }}
 
   tests:
-    needs: autofix
+    needs: [autofix, check]
+    if: ${{ !cancelled() && !failure() }}
     uses: ./.github/workflows/tests.yml
-    secrets: inherit
+    with:
+      ref: ${{ needs.autofix.outputs.sha }}
+
+  build:
+    needs: [autofix, check]
+    if: ${{ !cancelled() && !failure() }}
+    uses: ./.github/workflows/build.yml
     with:
       ref: ${{ needs.autofix.outputs.sha }}

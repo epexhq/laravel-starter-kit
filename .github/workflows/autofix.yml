@@ -2,9 +2,14 @@ name: autofix
 
 on:
   workflow_call:
+    inputs:
+      fix:
+        description: Commit and push the changes (true), or fail when anything would change (false).
+        type: boolean
+        required: true
     outputs:
       sha:
-        description: The commit autofix pushed, or empty when nothing changed.
+        description: The commit autofix pushed, or empty when nothing changed or fix is false.
         value: ${{ jobs.autofix.outputs.sha }}
 
 jobs:
@@ -17,13 +22,13 @@ jobs:
 
     env:
       BRANCH: ${{ github.head_ref || github.ref_name }}
-      COMPOSER_AUTH: '{"http-basic":{"composer.fluxui.dev":{"username":"${{ secrets.FLUX_USERNAME }}","password":"${{ secrets.FLUX_LICENSE_KEY }}"}}}'
 
     steps:
       - name: Checkout code
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          persist-credentials: ${{ inputs.fix }}
 
       - name: Start the database
         uses: ./.github/actions/setup-database
@@ -35,7 +40,7 @@ jobs:
         run: composer install --no-interaction --prefer-dist
 
       - name: Rector
-        run: composer refactor
+        run: composer ${{ inputs.fix && 'refactor' || 'refactor:check' }}
 
       # IDE Helper reads the model columns from the migrated database.
       - name: Migrate database
@@ -48,10 +53,19 @@ jobs:
         run: composer ide-helper
 
       - name: Pint
-        run: composer lint
+        run: composer ${{ inputs.fix && 'lint' || 'lint:check' }}
+
+      - name: Check IDE Helper output
+        if: ${{ !inputs.fix }}
+        run: |
+          if ! git diff --exit-code -- _ide_helper_models.php; then
+            echo "::error file=_ide_helper_models.php::_ide_helper_models.php is out of date. Run composer ide-helper and commit the result."
+            exit 1
+          fi
 
       - name: Commit fixes
         id: commit
+        if: ${{ inputs.fix }}
         run: |
           git add --all
 

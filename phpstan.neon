@@ -1,6 +1,7 @@
 includes:
     - vendor/larastan/larastan/extension.neon
     - vendor/nesbot/carbon/extension.neon
+    - vendor/calebdw/larastan-livewire/extension.neon
 
 parameters:
     paths:
@@ -9,5 +10,9 @@ parameters:
         - config/
         - database/
         - routes/
+        - tests/
 
     level: max
+
+    # Type model attributes from the casts() method, so a `datetime` cast is a Carbon instance.
+    parseModelCastsMethod: true

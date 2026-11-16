@@ -1,6 +1,12 @@
 @import 'tailwindcss';
 @import '../../vendor/livewire/flux/dist/flux.css';
 
+/* Agent guidelines, skills and docs aren't pages; keep their examples out of the CSS. */
+@source not '../../.agents';
+@source not '../../.ai';
+@source not '../../.claude';
+@source not '../../*.md';
+
 @custom-variant dark (&:where(.dark, .dark *));
 
 @theme {

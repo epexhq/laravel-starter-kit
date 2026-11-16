@@ -1,19 +1,19 @@
 # Laravel Starter Kit
 
-A Laravel starter kit: an empty Laravel app on PostgreSQL with Livewire, Flux Pro and a welcome page, plus a strict quality toolchain, Resend for email, Fathom Analytics and Laravel Nightwatch. It has no authentication.
+A Laravel starter kit: an empty Laravel app on PostgreSQL with Livewire, Flux, a layout and a welcome page, plus a strict quality toolchain, Laravel Scout with Typesense, Resend for email, Fathom Analytics, Laravel Nightwatch, Laravel Cloud support and Laravel Boost for coding agents. It has no authentication and no `User` model.
 
 ## What's included
 
 | Area | Package | Notes |
 | --- | --- | --- |
 | Framework | Laravel 13, Livewire 4 | |
-| UI | [Flux Pro](https://fluxui.dev), Tailwind CSS 4 | Flux's default theme; welcome page in `resources/views/welcome.blade.php` |
+| UI | [Flux](https://fluxui.dev) (free), Tailwind CSS 4 | Flux's default theme; layout in `resources/views/layouts/app.blade.php`, welcome page in `resources/views/welcome.blade.php`; see [Livewire](#livewire) and [Upgrading a project to Flux Pro](#upgrading-a-project-to-flux-pro) |
 | Blade performance | [Blaze](https://github.com/livewire/blaze) (`livewire/blaze`) | Folds Blade components into their parent templates; Flux's components use it |
 | Database | PostgreSQL | |
-| Testing | [Pest 5](https://pestphp.com) | Parallel, time-balanced sharding, Test Impact Analysis |
+| Testing | [Pest 5](https://pestphp.com) | Parallel, time-balanced CI shards, an architecture test, and Test Impact Analysis on demand (`composer test:tia`) |
 | Formatting | [Laravel Pint](https://laravel.com/docs/pint) | `laravel` preset |
 | Refactoring | [Rector](https://getrector.com) + [rector-laravel](https://github.com/driftingly/rector-laravel) + Pest's Rector plugin | See [Rector](#rector) |
-| Static analysis | [Larastan](https://github.com/larastan/larastan) | `level: max` |
+| Static analysis | [Larastan](https://github.com/larastan/larastan) + [larastan-livewire](https://github.com/calebdw/larastan-livewire) | `level: max`; larastan-livewire types Livewire's computed properties and `Livewire::test()` |
 | IDE support | [barryvdh/laravel-ide-helper](https://github.com/barryvdh/laravel-ide-helper) | Model docs in `_ide_helper_models.php` |
 | Email | [Resend](https://resend.com) (`resend/resend-php`) | Default mailer in `config/mail.php` |
 | Analytics | [Fathom Analytics](https://usefathom.com) | Off until `FATHOM_SITE_ID` is set; see [Analytics with Fathom](#analytics-with-fathom) |
@@ -21,35 +21,16 @@ A Laravel starter kit: an empty Laravel app on PostgreSQL with Livewire, Flux Pr
 | Monitoring | [Laravel Nightwatch](https://nightwatch.laravel.com) | `config/nightwatch.php` published, disabled until `NIGHTWATCH_ENABLED=true` |
 | Hosting | [Laravel Cloud](https://cloud.laravel.com) | `league/flysystem-aws-s3-v3` for Object Storage, `aws/aws-sdk-php` for managed queues; see [Deploy to Laravel Cloud](#deploy-to-laravel-cloud) |
 | Coding agents | [Laravel Boost](https://laravel.com/docs/boost) | MCP server, guidelines and skills for Amp, Claude Code and Codex; see [Coding agents](#coding-agents) |
-| Agent output | `laravel/pao` | Compact output from Pest, Pint, Rector and Larastan for coding agents; set `PAO_DISABLE=1` for the normal output |
+| Agent output | `laravel/pao` | Compact output from Pest, Rector and Larastan for coding agents; set `PAO_DISABLE=1` for the normal output. Pint prints JSON on its own when it detects a coding agent |
 
 ## Requirements
 
 - PHP 8.4 or newer
-- A [Flux Pro license](https://fluxui.dev/pricing), set up for Composer as in [Flux Pro](#flux-pro)
 - Composer 2
-- Node.js 22 and npm
+- Node.js `^22.18`, `^24.11` or 26 and newer, and npm
 - PostgreSQL, reachable with the defaults in `config/database.php` (`127.0.0.1:5432`, user `postgres`, no password)
 - To create a project with `laravel new --using`: the Laravel installer (tested with 5.33) and `npx`
-- [PCOV](https://github.com/krakjoe/pcov) or Xdebug for Pest's Test Impact Analysis locally (tests still run without one)
-
-## Flux Pro
-
-`livewire/flux-pro` is installed from `composer.fluxui.dev` (the `repositories` entry in `composer.json`). Composer logs in with your Flux account email as the username and your license key as the password, both on your [Flux dashboard](https://fluxui.dev/dashboard). Keep them out of the repository.
-
-On your machine, store them once in Composer's global `auth.json` (`~/.config/composer/auth.json`). It's outside every project, so `laravel new` and `composer install` in any copy of the kit use it:
-
-```bash
-composer config --global http-basic.composer.fluxui.dev your-email your-license-key
-```
-
-To keep them in one project only, leave out `--global`. Composer then writes `auth.json` in the project root, which `.gitignore` excludes. Composer also reads the `COMPOSER_AUTH` environment variable:
-
-```bash
-export COMPOSER_AUTH='{"http-basic":{"composer.fluxui.dev":{"username":"your-email","password":"your-license-key"}}}'
-```
-
-In GitHub Actions, add two repository secrets under **Settings → Secrets and variables → Actions**: `FLUX_USERNAME` (your Flux account email) and `FLUX_LICENSE_KEY`. `.github/workflows/ci.yml` passes them to the autofix, Larastan and tests workflows, which set `COMPOSER_AUTH` from them. Add the same two secrets under **Settings → Secrets and variables → Dependabot**: CI runs for Dependabot's pull requests read those instead. Pull requests from forks don't receive the secrets, so CI can't install Flux Pro there.
+- [PCOV](https://github.com/krakjoe/pcov) or Xdebug, only for `composer test:tia`
 
 ## Getting started
 
@@ -59,7 +40,14 @@ Create a new project from this repository with the [Laravel installer](https://l
 laravel new my-app --using=https://github.com/epexhq/laravel-starter-kit --no-boost --phpunit
 ```
 
-The installer downloads the repository, installs the Composer dependencies from `composer.lock`, creates `.env`, generates the app key, creates and migrates the `laravel` database and the `laravel_testing` database that the tests use, and, in a terminal, installs and builds the frontend. From a coding agent or with `--no-node` it skips that step; run `npm install && npm run build` yourself.
+The installer downloads the repository, installs the Composer dependencies from `composer.lock`, creates `.env`, generates the app key, creates and migrates the `laravel` database and the `laravel_testing` database that the tests use, and, in a terminal, installs and builds the frontend. With `--no-node`, or when it detects a coding agent, it skips that step; run `npm install && npm run build` yourself.
+
+The installer detects a coding agent from environment variables such as `AI_AGENT`, `AMP_CURRENT_THREAD_ID`, `CLAUDECODE`, `CLAUDE_CODE`, `CODEX_SANDBOX` and `CODEX_THREAD_ID` (the full list is in `laravel/agent-detector`'s `AgentDetector.php`). To run it from an agent's shell as if from a terminal, unset them:
+
+```bash
+env -u AI_AGENT -u AMP_CURRENT_THREAD_ID -u CLAUDECODE -u CLAUDE_CODE -u CODEX_SANDBOX -u CODEX_THREAD_ID \
+  laravel new my-app --using=https://github.com/epexhq/laravel-starter-kit --no-boost --phpunit
+```
 
 - `--no-boost`: Laravel Boost is already installed and configured.
 - `--phpunit`: the kit already uses Pest. Without this flag the installer sets Pest up again, which runs `composer update` and moves every dependency past `composer.lock`. The flag only skips that step; the project still uses Pest.
@@ -69,7 +57,12 @@ PostgreSQL must be running: if the installer can't connect, it stops with the co
 
 Every project uses the databases `laravel` and `laravel_testing`. To give a project its own, set `DB_DATABASE` in `.env` and run `composer setup:database`; the tests use the same name with `_testing` appended.
 
-A new project keeps the kit's MIT `LICENSE` file and `"license": "MIT"` in `composer.json`. For a private project, replace both.
+After installing, make the project your own:
+
+- In `composer.json`, set `name` (such as `acme/my-app`) and `description`.
+- In `.env` and `.env.example`, set `APP_NAME`.
+- Replace this `README.md`.
+- A new project keeps the kit's MIT `LICENSE` file and `"license": "MIT"` in `composer.json`. For a private project, delete `LICENSE` and set `"license": "proprietary"`.
 
 Or clone it and run the setup script. It installs dependencies, creates `.env` from `.env.example`, generates the app key, creates and migrates both databases, and builds the frontend:
 
@@ -91,7 +84,8 @@ composer dev
 | Script | What it does |
 | --- | --- |
 | `composer qa` | Applies Rector, applies Pint, runs Larastan, then runs the tests. Run it before every commit. |
-| `composer test` | Clears cached config and runs `pest --parallel` (with TIA locally). |
+| `composer test` | Clears cached config and runs the full suite with `pest --parallel`. |
+| `composer test:tia` | Clears cached config and runs `pest --parallel --tia`, which re-runs only the tests affected by your changes. See [Fast tests](#fast-tests). |
 | `composer ci:check` | The read-only version of `qa`: `rector --dry-run`, `pint --test`, Larastan, tests. |
 | `composer refactor` / `refactor:check` | Rector, applying changes or as a dry run. |
 | `composer lint` / `lint:check` | Pint, fixing or checking. |
@@ -108,24 +102,73 @@ composer dev
 
 ## Fast tests
 
-- **Database:** `phpunit.xml` sets `APP_ENV=testing`, so tests run against the app's database name with `_testing` appended (`config/database.php`), such as `laravel_testing`. In parallel runs each process gets its own `laravel_testing_test_N` copy.
+- **Database:** `phpunit.xml` forces `APP_ENV=testing` and clears `DB_URL`, even when your shell or `.env` sets them, so tests always run against the app's database name with `_testing` appended (`config/database.php`), such as `laravel_testing`. In parallel runs each process gets its own `laravel_testing_test_N` copy. `composer setup:test-database` migrates the same database.
 - **No frontend build needed:** `tests/TestCase.php` calls `withoutVite()`, so the tests pass without `npm run build`.
 - **Parallel:** `composer test` runs `pest --parallel`, one process per CPU core.
 - **Test location:** `phpunit.xml` runs every `*Test.php` file under `tests/`, including unit tests made with `php artisan make:test --unit`.
-- **Test Impact Analysis (TIA):** `tests/Pest.php` enables `pest()->tia()->locally()`. On your machine, Pest re-runs only the tests affected by your changes and replays the rest from cache. The first run records the dependency graph and needs PCOV or Xdebug. TIA also needs a git repository with at least one commit, so it stays off (and the full suite runs) until you make your first commit. Use `--no-tia` for a full run, or `--tia --fresh` to re-record the graph. With `--ci`, TIA is off and the full suite runs.
-- **Sharding:** CI splits the suite into two shards (`pest --ci --parallel --shard=N/2`), balanced by the timings in `tests/.pest/shards.json`. Refresh the timings with `./vendor/bin/pest --parallel --no-tia --update-shards` as the suite grows, and change the shard count in `.github/workflows/tests.yml`.
+- **Test Impact Analysis (TIA):** `composer test:tia` runs Pest's experimental Test Impact Analysis: it re-runs only the tests affected by your changes and replays the rest from cache. The first run records the dependency graph and needs PCOV or Xdebug, and TIA needs a git repository with at least one commit. Run `./vendor/bin/pest --parallel --tia --fresh` to re-record the graph. `composer test`, `composer qa` and CI don't use TIA and always run the full suite.
+- **Sharding:** CI splits the suite into two shards (`pest --parallel --shard=N/2`), balanced by the timings in `tests/.pest/shards.json`. Refresh the timings with `./vendor/bin/pest --parallel --update-shards` as the suite grows, and change the shard count in `.github/workflows/tests.yml`.
+- **Architecture test:** `tests/ArchTest.php` fails when a Livewire component isn't a class in `app/Livewire`; see [Livewire](#livewire).
 
 ## Continuous integration
 
-`.github/workflows/ci.yml` runs on pushes to `main` and on pull requests. It calls three workflows in order:
+`.github/workflows/ci.yml` runs on pushes to `main` and on pull requests:
 
-1. **Autofix** (`autofix.yml`) runs Rector, then IDE Helper against a migrated database, then Pint. If anything changed, it commits the result as `github-actions[bot]` and pushes it back to the branch.
-2. **Larastan** (`larastan.yml`) at max level, check only.
-3. **Tests** (`tests.yml`) in two time-balanced shards.
+1. **Autofix** (`autofix.yml`) runs Rector, then IDE Helper against a migrated database, then Pint.
+   - On pull requests from branches of this repository, it commits any change as `github-actions[bot]` and pushes it to the branch.
+   - On pushes to `main` and on pull requests from forks, it runs in check mode (`rector --dry-run`, `pint --test`, and a comparison of the regenerated `_ide_helper_models.php`) and fails when anything would change. It never commits.
+2. Then, in parallel:
+   - **Larastan** (`larastan.yml`) at max level, check only.
+   - **Tests** (`tests.yml`) in two time-balanced shards.
+   - **Frontend build** (`build.yml`): `npm ci` and `npm run build` on Node 22. It installs the Composer dependencies too, because `resources/css/app.css` imports Flux's CSS from `vendor/`.
 
-All three install PHP 8.4 with `.github/actions/setup-php`; change the version there. Autofix and the tests start a PostgreSQL 18 container with `.github/actions/setup-database`. The tests install the Composer dependencies and create their database; they don't build the frontend.
+All of them install PHP 8.4 with `.github/actions/setup-php`; change the version there. Autofix and the tests start a PostgreSQL 18 container with `.github/actions/setup-database`. CI needs no secrets.
 
-Larastan and the tests start after autofix succeeds and run on the autofix commit when there is one. The autofix commit doesn't start a new CI run; on a pull request it shows a `ci` run awaiting approval, which you can ignore. After an autofix commit, pull the branch before pushing again.
+Larastan, the tests and the build run on the autofix commit when there is one. The autofix commit doesn't start a new CI run; on a pull request it shows a `ci` run awaiting approval, which you can ignore. After an autofix commit, pull the branch before pushing again.
+
+## Livewire
+
+Livewire components are classes in `app/Livewire` with their views in `resources/views/livewire`, so Rector, Pint and Larastan check them. `config/livewire.php` makes `php artisan make:livewire` create this kind and turns off single-file and multi-file components, and `tests/ArchTest.php` fails on them.
+
+A full-page component uses `resources/views/layouts/app.blade.php` (`layouts::app`), which includes the page head: fonts, the Vite assets, `@fluxAppearance`, Fathom and `@fluxScripts`. To add a page:
+
+```bash
+php artisan make:livewire Dashboard
+```
+
+```php
+// routes/web.php
+Route::livewire('/dashboard', App\Livewire\Dashboard::class);
+```
+
+Then run `composer qa`: Rector adds the `render()` return type that Larastan requires. To set the page title, add `#[Title('Dashboard')]` (`Livewire\Attributes\Title`) to the class. Blade views use the same layout with `<x-layouts::app :title="__('Welcome')">`, as `welcome.blade.php` does.
+
+## Models
+
+The kit has no models. `app/Models` and `database/factories` are empty, so `php artisan make:model Post --migration --factory` creates `App\Models\Post`, its migration and `Database\Factories\PostFactory`. After a migration, run `composer ide-helper` and commit `_ide_helper_models.php`.
+
+## Upgrading a project to Flux Pro
+
+The kit uses free Flux. To use Flux Pro in a project, run:
+
+```bash
+php artisan flux:activate
+```
+
+It asks for your Flux account email and license key and saves them to the project's `auth.json`, which `.gitignore` excludes, then adds the `composer.fluxui.dev` repository to `composer.json` and requires `livewire/flux-pro`. Commit `composer.json` and `composer.lock`.
+
+Every other place that runs `composer install` then needs the credentials:
+
+- **GitHub Actions:** add the repository secrets `FLUX_USERNAME` and `FLUX_LICENSE_KEY` (and the same two as Dependabot secrets), pass them from `ci.yml` with `secrets: inherit`, and set this on each workflow job that installs Composer dependencies:
+
+  ```yaml
+  env:
+    COMPOSER_AUTH: '{"http-basic":{"composer.fluxui.dev":{"username":"${{ secrets.FLUX_USERNAME }}","password":"${{ secrets.FLUX_LICENSE_KEY }}"}}}'
+  ```
+
+  Pull requests from forks don't receive secrets, so CI can't install Flux Pro there.
+- **Laravel Cloud:** add `FLUX_USERNAME` and `FLUX_LICENSE_KEY` as variables and start the build commands with `composer config http-basic.composer.fluxui.dev "$FLUX_USERNAME" "$FLUX_LICENSE_KEY"`.
+- **Amp orbs:** add `COMPOSER_AUTH` with the same JSON as a project secret.
 
 ## Email with Resend
 
@@ -157,9 +200,12 @@ TYPESENSE_API_KEY=your-api-key
 
 `TYPESENSE_PORT` (default `8108`) and `TYPESENSE_PROTOCOL` (default `http`) reach other servers, such as [Typesense Cloud](https://cloud.typesense.org) on `443` and `https`. Amp orbs run Typesense and set these variables; see [Amp orbs](#amp-orbs).
 
-Make a model searchable with Scout's `Searchable` trait. Typesense also needs a collection schema with the fields from `toSearchableArray()`, and the fields to search:
+Make a model searchable with Scout's `Searchable` trait. Typesense also needs a collection schema with the fields from `toSearchableArray()`, and the fields to search, both defined on the model (Typesense doesn't support `php artisan scout:sync-index-settings`):
 
 ```php
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Model;
 use Laravel\Scout\Searchable;
 
 class Post extends Model
@@ -214,10 +260,11 @@ Nightwatch only sends data while its agent runs next to your app, so keep `php a
 
 Create an application in [Laravel Cloud](https://cloud.laravel.com) from your project's repository, then set up its environment.
 
-**Build commands.** The first line logs Composer in to Flux Pro with the `FLUX_USERNAME` and `FLUX_LICENSE_KEY` variables below:
+**Settings:** PHP 8.4 and Node 22.
+
+**Build commands:**
 
 ```bash
-composer config http-basic.composer.fluxui.dev "$FLUX_USERNAME" "$FLUX_LICENSE_KEY"
 composer install --no-dev
 npm ci --audit false
 npm run build
@@ -247,24 +294,30 @@ Cloud's startup and readiness health checks use the `/up` route from `bootstrap/
 **Environment variables** to add yourself, as custom variables or linked secrets:
 
 ```dotenv
-FLUX_USERNAME=your-email
-FLUX_LICENSE_KEY=your-license-key
+APP_NAME="My App"
 SESSION_DRIVER=database
-NIGHTWATCH_ENABLED=true
-FATHOM_SITE_ID=ABCDEFGH
 ```
 
-Set `SESSION_DRIVER=redis` instead when a Valkey cache is attached. If the environment has no `APP_KEY`, add the output of `php artisan key:generate --show` too.
+Set `SESSION_DRIVER=redis` instead when a Valkey cache is attached. Optional:
+
+```dotenv
+# Nightwatch, once it's connected
+NIGHTWATCH_ENABLED=true
+# Fathom Analytics
+FATHOM_SITE_ID=ABCDEFGH
+``` If the environment has no `APP_KEY`, add the output of `php artisan key:generate --show` too.
 
 Add only these variables, the search variables, and `BROADCAST_CONNECTION` from [Real-time with Reverb](#real-time-with-reverb). Don't copy your local `.env` into Cloud or push it with `cloud deploy --push-env`: a variable you set replaces the one Cloud sets, so local values such as `DB_HOST`, `MAIL_MAILER=log` and `LOG_STACK` would replace Cloud's database, mail and log settings.
 
-**Cloud CLI.** To deploy and manage Cloud from the terminal, and for the `deploying-to-cloud` agent skill, install the [Cloud CLI](https://cloud.laravel.com/docs/api/cli) globally:
+**Cloud CLI.** To deploy and manage Cloud from the terminal, and for the `deploying-to-cloud` agent skill, install the [Cloud CLI](https://cloud.laravel.com/docs/api/cli) in the project and run it from `vendor/bin`:
 
 ```bash
-composer global require laravel/cloud-cli
-cloud auth
-cloud deploy
+composer require --dev laravel/cloud-cli
+./vendor/bin/cloud auth
+./vendor/bin/cloud deploy
 ```
+
+`cloud auth` opens a browser. Where there is none, such as in an Amp orb, create an API token in Cloud and either set it as `LARAVEL_CLOUD_TOKEN` or save it with `./vendor/bin/cloud auth:token --add`. The skill uses the project's CLI and falls back to a global install (`composer global require laravel/cloud-cli`, run as `cloud`) only when the project has none.
 
 ## Real-time with Reverb
 
@@ -299,7 +352,7 @@ On Laravel Cloud:
 [Laravel Boost](https://laravel.com/docs/boost) is set up for Amp, Claude Code and Codex:
 
 - **MCP server** (`php artisan boost:mcp`): tools to search the docs for the installed package versions (`search-docs`), read the database schema, run read-only queries, read the app and browser logs and the last error, and resolve app URLs.
-- **Guidelines** for the installed versions of Laravel, Livewire, Pest and Pint, in `AGENTS.md` (Amp, Codex) and `CLAUDE.md` (Claude Code). Add your own instructions outside the `<laravel-boost-guidelines>` tags; Boost only rewrites what's inside them.
+- **Guidelines** in `AGENTS.md` (Amp, Codex) and `CLAUDE.md` (Claude Code): first the project's conventions from `.ai/guidelines/starter-kit.md` (run `composer qa` before every commit, PostgreSQL only, no `User` model, class-based Livewire components, `composer test:tia`, what the cache can hold, Typesense index settings), then Boost's guidelines for the installed versions of Laravel, Livewire, Pest and Pint. To change the project's conventions, edit or add files in `.ai/guidelines/` and run `php artisan boost:update`; Boost rewrites everything inside the `<laravel-boost-guidelines>` tags.
 - **Skills** in `.agents/skills/` (Amp, Codex) and `.claude/skills/` (Claude Code): `laravel-best-practices`, `testing-best-practices`, `livewire-development`, `fluxui-development`, `tailwindcss-development`, `blaze-optimize`, `configure-nightwatch`, `scout-development`, `deploying-to-cloud` and `infer-conventions`.
 
 | File | Contents |
@@ -324,7 +377,7 @@ The generated guidelines and skills come from Laravel Boost, Laravel Nightwatch 
 | RustFS | `FILESYSTEM_DISK=s3`, bucket `app` | console portal, `orb` / `orb-secret` |
 | Typesense | `SCOUT_DRIVER=typesense`, API key `orb` | |
 
-Setup installs the dependencies and creates both databases when `FLUX_USERNAME` and `FLUX_LICENSE_KEY` are project secrets. It writes the `# Orb services` block to `.env` once, so your later edits to it stay. The queue stays on the database. File URLs point at `127.0.0.1:9000` and open only inside the orb; browse stored files in the RustFS console.
+Setup installs the dependencies, builds the frontend and creates both databases; it needs no secrets. It writes the `# Orb services` block to `.env` once, so your later edits to it stay. The queue stays on the database. File URLs point at `127.0.0.1:9000` and open only inside the orb; browse stored files in the RustFS console.
 
 ## License
 
