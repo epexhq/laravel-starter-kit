@@ -13,9 +13,10 @@ concurrency:
   group: ci-${{ github.head_ref || github.ref }}
   cancel-in-progress: true
 
-# On pull requests from branches of this repository, autofix applies Rector, IDE Helper and
-# Pint, commits any change and pushes it to the branch. Pushes to main and pull requests from
-# forks run the same tools in check mode instead, which fail when anything would change.
+# On pull requests from branches of this repository, except Dependabot's, autofix applies Rector,
+# IDE Helper and Pint, commits any change and pushes it to the branch. Pushes to main, pull
+# requests from forks and Dependabot's pull requests, whose new dependencies shouldn't run with a
+# write token, run the same tools in check mode instead, which fail when anything would change.
 #
 # Larastan, the tests and the frontend build then run on the code autofix produced: its commit
 # when it pushed one, otherwise the commit that triggered this run. A push made with
@@ -23,7 +24,7 @@ concurrency:
 # waits for approval), and a rerun finds nothing to fix, so autofix cannot loop.
 jobs:
   autofix:
-    if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository
+    if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository && github.event.pull_request.user.login != 'dependabot[bot]'
     uses: ./.github/workflows/autofix.yml
     with:
       fix: true
@@ -31,7 +32,7 @@ jobs:
       contents: write
 
   check:
-    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name != github.repository
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name != github.repository || github.event.pull_request.user.login == 'dependabot[bot]'
     uses: ./.github/workflows/autofix.yml
     with:
       fix: false

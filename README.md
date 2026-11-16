@@ -15,10 +15,10 @@ A Laravel starter kit: an empty Laravel app on PostgreSQL with Livewire, Flux, a
 | Refactoring | [Rector](https://getrector.com) + [rector-laravel](https://github.com/driftingly/rector-laravel) + Pest's Rector plugin | See [Rector](#rector) |
 | Static analysis | [Larastan](https://github.com/larastan/larastan) + [larastan-livewire](https://github.com/calebdw/larastan-livewire) + [Pest's PHPStan plugin](https://pestphp.com/docs/phpstan) | `level: max` on the app and `tests/`; see [Static analysis](#static-analysis) |
 | IDE support | [barryvdh/laravel-ide-helper](https://github.com/barryvdh/laravel-ide-helper) | Model docs in `_ide_helper_models.php` |
-| Email | [Resend](https://resend.com) (`resend/resend-php`) | Default mailer in `config/mail.php` |
+| Email | [Resend](https://resend.com) (`resend/resend-php`) | `MAIL_MAILER=resend` in production; see [Email with Resend](#email-with-resend) |
 | Analytics | [Fathom Analytics](https://usefathom.com) | Off until `FATHOM_SITE_ID` is set; see [Analytics with Fathom](#analytics-with-fathom) |
 | Search | [Laravel Scout](https://laravel.com/docs/scout) | Scout's `collection` driver until `SCOUT_DRIVER` is set; Typesense is an optional install; see [Search with Scout](#search-with-scout) |
-| Monitoring | [Laravel Nightwatch](https://nightwatch.laravel.com) | `config/nightwatch.php` published, disabled until `NIGHTWATCH_ENABLED=true` |
+| Monitoring | [Laravel Nightwatch](https://nightwatch.laravel.com) | `config/nightwatch.php` published; `.env.example` turns it off locally |
 | Hosting | [Laravel Cloud](https://cloud.laravel.com) | `league/flysystem-aws-s3-v3` for Object Storage, `aws/aws-sdk-php` for managed queues; see [Deploy to Laravel Cloud](#deploy-to-laravel-cloud) |
 | Coding agents | [Laravel Boost](https://laravel.com/docs/boost) | MCP server, guidelines and skills for Amp, Claude Code and Codex; see [Coding agents](#coding-agents) |
 | Agent output | `laravel/pao` | Compact output from Pest, Rector and Larastan for coding agents; set `PAO_DISABLE=1` for the normal output. Pint prints JSON on its own when it detects a coding agent |
@@ -28,7 +28,7 @@ A Laravel starter kit: an empty Laravel app on PostgreSQL with Livewire, Flux, a
 - PHP 8.4 or newer
 - Composer 2
 - Node.js 26, the LTS version in `.nvmrc` (`nvm use` reads it), and npm
-- PostgreSQL, reachable with the defaults in `config/database.php` (`127.0.0.1:5432`, user `postgres`, no password)
+- PostgreSQL, reachable with the kit's defaults (`127.0.0.1:5432`, user `postgres`, no password)
 - To create a project with `laravel new --using`: the Laravel installer (tested with 5.33) and `npx`
 - [PCOV](https://github.com/krakjoe/pcov) or Xdebug, only for `composer test:tia`
 
@@ -102,7 +102,7 @@ composer dev
 
 ## Fast tests
 
-- **Database and services:** `phpunit.xml` sets `APP_ENV=testing`, clears `DB_URL` and sets the cache, mail, queue, session, filesystem, broadcasting, search and Nightwatch settings in `$_SERVER`, so they win over your shell and `.env`. It also points `APP_CONFIG_CACHE` at a file that doesn't exist, so tests ignore a config cached by `php artisan config:cache` or `optimize`. Tests therefore run against the app's database name with `_testing` appended (`config/database.php`), such as `laravel_testing`, however you run them: `composer test`, `php artisan test` or `vendor/bin/pest`. In parallel runs each process gets its own `laravel_testing_test_N` copy. `composer setup:test-database` migrates the same database, also ignoring a cached config.
+- **Database and services:** `phpunit.xml` sets `APP_ENV=testing`, clears `DB_URL` and sets the cache, mail, queue, session, filesystem, broadcasting, search and Nightwatch settings in `$_SERVER`, so they win over your shell and `.env`. It also points `APP_CONFIG_CACHE`, `APP_EVENTS_CACHE` and `APP_ROUTES_CACHE` at files that don't exist, so tests ignore the config, events and routes cached by `php artisan optimize`. Tests therefore run against the app's database name with `_testing` appended (`config/database.php`), such as `laravel_testing`, however you run them: `composer test`, `php artisan test` or `vendor/bin/pest`. In parallel runs each process gets its own `laravel_testing_test_N` copy. `composer setup:test-database` migrates the same database, also ignoring a cached config.
 - **No frontend build needed:** `tests/TestCase.php` calls `withoutVite()`, so the tests pass without `npm run build`.
 - **Parallel:** `composer test` runs `pest --parallel`, one process per CPU core.
 - **Test location:** `phpunit.xml` runs every `*Test.php` file under `tests/`, including unit tests made with `php artisan make:test --unit`.
@@ -128,7 +128,7 @@ Larastan, the tests and the build run on the autofix commit when there is one. T
 
 ## Livewire
 
-Livewire components are classes in `app/Livewire` with their views in `resources/views/livewire`, so Rector, Pint and Larastan check them. `config/livewire.php` makes `php artisan make:livewire` create this kind and turns off single-file and multi-file components, and `tests/ArchTest.php` fails on them.
+Livewire components are classes in `app/Livewire` with their views in `resources/views/livewire`, so Rector, Pint and Larastan check them. `config/livewire.php` makes `php artisan make:livewire` create this kind (`make_command.type`), and `tests/ArchTest.php` fails on single-file and multi-file components.
 
 A full-page component uses `resources/views/layouts/app.blade.php` (`layouts::app`), which includes the page head: fonts, the Vite assets, `@fluxAppearance`, Fathom and `@fluxScripts`. To add a page:
 
@@ -172,7 +172,7 @@ Every other place that runs `composer install` then needs the credentials:
 
 ## Email with Resend
 
-`config/mail.php` defaults to the `resend` mailer and `config/services.php` reads `RESEND_API_KEY`. `.env.example` sets `MAIL_MAILER=log`, so local emails are written to `storage/logs/laravel.log` instead of being sent. In production:
+`config/services.php` reads `RESEND_API_KEY` for the `resend` mailer in `config/mail.php`. `.env.example` sets `MAIL_MAILER=log`, so local emails are written to `storage/logs/laravel.log` instead of being sent. In production:
 
 ```dotenv
 MAIL_MAILER=resend
@@ -192,7 +192,27 @@ FATHOM_SITE_ID=ABCDEFGH
 
 `laravel/scout` is installed without a search server. Until `SCOUT_DRIVER` is set, Scout uses its `collection` driver, which loads the models from the database and filters them in PHP, so it suits small tables. Tests always use it (`phpunit.xml`). For larger tables, set `SCOUT_DRIVER=database`: Scout's [database engine](https://laravel.com/docs/scout#database-engine) searches the model's table with `ilike` queries, or PostgreSQL full-text search on the columns marked `#[SearchUsingFullText]`, and needs no index.
 
-Make a model searchable with Scout's `Searchable` trait, then search with `Post::search('laravel')->get()`.
+Make a model searchable with Scout's `Searchable` trait and a `toSearchableArray()` method that returns the columns to search, then search with `Post::search('laravel')->get()`. The database engine searches only the keys that method returns; without it, the model has none and every row matches.
+
+```php
+use Laravel\Scout\Searchable;
+
+class Post extends Model
+{
+    use Searchable;
+
+    /**
+     * @return array<string, mixed>
+     */
+    public function toSearchableArray(): array
+    {
+        return [
+            'title' => $this->title,
+            'body' => $this->body,
+        ];
+    }
+}
+```
 
 ### Adding Typesense
 
@@ -260,10 +280,9 @@ Scout indexes a model when it's saved; to index existing records, run `php artis
 
 ## Monitoring with Nightwatch
 
-`laravel/nightwatch` is installed and `config/nightwatch.php` is published with Nightwatch disabled by default. To enable it, set:
+`laravel/nightwatch` is installed and `config/nightwatch.php` is published as Nightwatch ships it, enabled unless `NIGHTWATCH_ENABLED=false`. `.env.example` sets `NIGHTWATCH_ENABLED=false`, so it's off locally. To use it, set:
 
 ```dotenv
-NIGHTWATCH_ENABLED=true
 NIGHTWATCH_TOKEN=your-environment-token
 ```
 
@@ -314,10 +333,10 @@ SESSION_DRIVER=database
 Set `SESSION_DRIVER=redis` instead when a Valkey cache is attached. Optional:
 
 ```dotenv
-# Nightwatch, once it's connected
-NIGHTWATCH_ENABLED=true
 # Fathom Analytics
 FATHOM_SITE_ID=ABCDEFGH
+# Without Nightwatch connected
+NIGHTWATCH_ENABLED=false
 ```
 
 If the environment has no `APP_KEY`, add the output of `php artisan key:generate --show` too.
@@ -364,7 +383,7 @@ On Laravel Cloud:
 
 ## Static analysis
 
-`phpstan.neon` runs Larastan at `level: max` on `app`, `bootstrap/app.php`, `config`, `database`, `routes` and `tests`, with:
+`phpstan.neon` runs Larastan at `level: max` on `app`, `bootstrap/app.php`, `config`, `database`, `routes` and `tests`, except `config/boost.php`, `config/filesystems.php` and `config/nightwatch.php`, which are kept as Laravel and the packages publish them. It uses:
 
 - larastan-livewire, which types Livewire's computed properties and `Livewire::test()`
 - Pest's PHPStan plugin, which types `$this` in test closures as the test case bound in `tests/Pest.php`, and the value in `expect()` chains. It also reports expectations that can't fail, such as the `expect(true)->toBeTrue()` placeholder in a test made with `php artisan make:test --pest --unit`
@@ -382,7 +401,6 @@ On Laravel Cloud:
 | File | Contents |
 | --- | --- |
 | `boost.json` | The configured agents, skills and integrations (Laravel Cloud is on; Nightwatch MCP and Sail are off) |
-| `config/boost.php` | `enforce_tests`, which keeps Boost's test-writing guidelines in `AGENTS.md` and `CLAUDE.md` |
 | `.mcp.json`, `.amp/settings.json`, `.codex/config.toml` | The MCP server for Claude Code, Amp and Codex |
 
 To add or remove agents or integrations, run `php artisan boost:install`. To regenerate the guidelines and skills, run `php artisan boost:update` (`composer update` runs it too). Commit the files they change. Don't edit skills in `.agents/skills/` or `.claude/skills/` directly; `boost:update` overwrites them. To change one, put your version in `.ai/skills/<name>/` (a skill there replaces Boost's skill of the same name) and run `php artisan boost:update`, which links it into both folders. Commit `.ai/skills/` too.
@@ -397,11 +415,11 @@ The generated guidelines and skills come from Laravel Boost, Laravel Nightwatch 
 | --- | --- | --- |
 | App (`php artisan serve`) | | app portal |
 | PostgreSQL 18 | the kit's defaults | |
-| Valkey | `CACHE_STORE=redis`, `SESSION_DRIVER=redis` | |
+| Valkey | `CACHE_STORE=redis`, `SESSION_DRIVER=redis`, `QUEUE_CONNECTION=redis` | |
 | Mailpit | `MAIL_MAILER=smtp`, port 1025 | inbox portal |
 | RustFS | `FILESYSTEM_DISK=s3`, bucket `app` | console portal, `orb` / `orb-secret` |
 
-Setup installs the dependencies, builds the frontend and creates both databases; it needs no secrets. It writes the `# Orb services` block to `.env` once, so your later edits to it stay. The app portal serves the built frontend, so run `npm run build` after changing CSS or JavaScript. Setup also adds `TRUSTED_PROXIES=127.0.0.1` to `.env`, which `config/trustedproxy.php` reads, so pages opened through a portal link to its HTTPS URLs. Leave `TRUSTED_PROXIES` unset on Laravel Cloud. The queue stays on the database. File URLs point at `127.0.0.1:9000` and open only inside the orb; browse stored files in the RustFS console.
+Setup installs the dependencies, builds the frontend and creates both databases; it needs no secrets. It writes the `# Orb services` block to `.env` once, so your later edits to it stay; on an orb set up earlier, it moves a database queue to Valkey and removes the old Typesense settings. The app portal serves the built frontend, so run `npm run build` after changing CSS or JavaScript. Setup also adds `TRUSTED_PROXIES=127.0.0.1` to `.env`, which `config/trustedproxy.php` reads, so pages opened through a portal link to its HTTPS URLs. Leave `TRUSTED_PROXIES` unset on Laravel Cloud. Jobs run when `php artisan queue:work` or `composer dev` is running. File URLs point at `127.0.0.1:9000` and open only inside the orb; browse stored files in the RustFS console.
 
 ## License
 

@@ -17,11 +17,13 @@
     <php>
         <!--
             Set in $_SERVER, which Laravel reads before exported variables and .env, so these values
-            always apply in tests. APP_CONFIG_CACHE points at a file that doesn't exist, so tests
-            never load a config cached by `php artisan config:cache` or `optimize`.
+            always apply in tests. The APP_*_CACHE values point at files that don't exist, so tests
+            never load the config, events or routes cached by `php artisan optimize`.
         -->
         <server name="APP_CONFIG_CACHE" value="bootstrap/cache/config.testing.php"/>
         <server name="APP_ENV" value="testing"/>
+        <server name="APP_EVENTS_CACHE" value="bootstrap/cache/events.testing.php"/>
+        <server name="APP_ROUTES_CACHE" value="bootstrap/cache/routes.testing.php"/>
         <server name="BROADCAST_CONNECTION" value="null"/>
         <server name="CACHE_STORE" value="array"/>
         <server name="DB_CONNECTION" value="pgsql"/>

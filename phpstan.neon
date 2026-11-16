@@ -13,6 +13,12 @@ parameters:
         - routes/
         - tests/
 
+    # Kept exactly as Laravel and the packages publish them; their env() calls aren't typed for level max.
+    excludePaths:
+        - config/boost.php
+        - config/filesystems.php
+        - config/nightwatch.php
+
     level: max
 
     # Type model attributes from the casts() method, so a `datetime` cast is a Carbon instance.

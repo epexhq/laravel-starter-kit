@@ -28,7 +28,14 @@ updates:
       interval: "weekly"
     cooldown:
       default-days: 5
+    # vite is an npm: alias of vite-plus-core that Dependabot can't update, so a vite-plus update
+    # needs the alias and the override in package.json changed by hand. Its own group keeps that
+    # from blocking the other npm updates.
     groups:
+      vite-plus:
+        patterns:
+          - "vite"
+          - "vite-plus"
       npm:
         patterns:
           - "*"
