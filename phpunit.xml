@@ -15,18 +15,22 @@
         </include>
     </source>
     <php>
-        <!-- Forced, and set in $_SERVER too, so an exported APP_ENV or DB_URL can't point the tests at another database. -->
-        <env name="APP_ENV" value="testing" force="true"/>
+        <!--
+            Set in $_SERVER, which Laravel reads before exported variables and .env, so these values
+            always apply in tests. APP_CONFIG_CACHE points at a file that doesn't exist, so tests
+            never load a config cached by `php artisan config:cache` or `optimize`.
+        -->
+        <server name="APP_CONFIG_CACHE" value="bootstrap/cache/config.testing.php"/>
         <server name="APP_ENV" value="testing"/>
-        <env name="CACHE_STORE" value="array"/>
-        <env name="DB_CONNECTION" value="pgsql"/>
-        <env name="DB_URL" value="" force="true"/>
+        <server name="BROADCAST_CONNECTION" value="null"/>
+        <server name="CACHE_STORE" value="array"/>
+        <server name="DB_CONNECTION" value="pgsql"/>
         <server name="DB_URL" value=""/>
-        <env name="FILESYSTEM_DISK" value="local"/>
-        <env name="MAIL_MAILER" value="array"/>
-        <env name="QUEUE_CONNECTION" value="sync"/>
-        <env name="SCOUT_DRIVER" value="collection"/>
-        <env name="SESSION_DRIVER" value="array"/>
-        <env name="NIGHTWATCH_ENABLED" value="false"/>
+        <server name="FILESYSTEM_DISK" value="local"/>
+        <server name="MAIL_MAILER" value="array"/>
+        <server name="NIGHTWATCH_ENABLED" value="false"/>
+        <server name="QUEUE_CONNECTION" value="sync"/>
+        <server name="SCOUT_DRIVER" value="collection"/>
+        <server name="SESSION_DRIVER" value="array"/>
     </php>
 </phpunit>

@@ -13,7 +13,7 @@ A Laravel starter kit: an empty Laravel app on PostgreSQL with Livewire, Flux, a
 | Testing | [Pest 5](https://pestphp.com) | Parallel, time-balanced CI shards, an architecture test, and Test Impact Analysis on demand (`composer test:tia`) |
 | Formatting | [Laravel Pint](https://laravel.com/docs/pint) | `laravel` preset |
 | Refactoring | [Rector](https://getrector.com) + [rector-laravel](https://github.com/driftingly/rector-laravel) + Pest's Rector plugin | See [Rector](#rector) |
-| Static analysis | [Larastan](https://github.com/larastan/larastan) + [larastan-livewire](https://github.com/calebdw/larastan-livewire) | `level: max`; larastan-livewire types Livewire's computed properties and `Livewire::test()` |
+| Static analysis | [Larastan](https://github.com/larastan/larastan) + [larastan-livewire](https://github.com/calebdw/larastan-livewire) + [Pest's PHPStan plugin](https://pestphp.com/docs/phpstan) | `level: max` on the app and `tests/`; see [Static analysis](#static-analysis) |
 | IDE support | [barryvdh/laravel-ide-helper](https://github.com/barryvdh/laravel-ide-helper) | Model docs in `_ide_helper_models.php` |
 | Email | [Resend](https://resend.com) (`resend/resend-php`) | Default mailer in `config/mail.php` |
 | Analytics | [Fathom Analytics](https://usefathom.com) | Off until `FATHOM_SITE_ID` is set; see [Analytics with Fathom](#analytics-with-fathom) |
@@ -84,8 +84,8 @@ composer dev
 | Script | What it does |
 | --- | --- |
 | `composer qa` | Applies Rector, applies Pint, runs Larastan, then runs the tests. Run it before every commit. |
-| `composer test` | Clears cached config and runs the full suite with `pest --parallel`. |
-| `composer test:tia` | Clears cached config and runs `pest --parallel --tia`, which re-runs only the tests affected by your changes. See [Fast tests](#fast-tests). |
+| `composer test` | Runs the full suite with `pest --parallel`. |
+| `composer test:tia` | Runs `pest --parallel --tia`, which re-runs only the tests affected by your changes. See [Fast tests](#fast-tests). |
 | `composer ci:check` | The read-only version of `qa`: `rector --dry-run`, `pint --test`, Larastan, tests. |
 | `composer refactor` / `refactor:check` | Rector, applying changes or as a dry run. |
 | `composer lint` / `lint:check` | Pint, fixing or checking. |
@@ -102,11 +102,11 @@ composer dev
 
 ## Fast tests
 
-- **Database:** `phpunit.xml` forces `APP_ENV=testing` and clears `DB_URL`, even when your shell or `.env` sets them, so tests always run against the app's database name with `_testing` appended (`config/database.php`), such as `laravel_testing`. In parallel runs each process gets its own `laravel_testing_test_N` copy. `composer setup:test-database` migrates the same database.
+- **Database and services:** `phpunit.xml` sets `APP_ENV=testing`, clears `DB_URL` and sets the cache, mail, queue, session, filesystem, broadcasting, search and Nightwatch settings in `$_SERVER`, so they win over your shell and `.env`. It also points `APP_CONFIG_CACHE` at a file that doesn't exist, so tests ignore a config cached by `php artisan config:cache` or `optimize`. Tests therefore run against the app's database name with `_testing` appended (`config/database.php`), such as `laravel_testing`, however you run them: `composer test`, `php artisan test` or `vendor/bin/pest`. In parallel runs each process gets its own `laravel_testing_test_N` copy. `composer setup:test-database` migrates the same database, also ignoring a cached config.
 - **No frontend build needed:** `tests/TestCase.php` calls `withoutVite()`, so the tests pass without `npm run build`.
 - **Parallel:** `composer test` runs `pest --parallel`, one process per CPU core.
 - **Test location:** `phpunit.xml` runs every `*Test.php` file under `tests/`, including unit tests made with `php artisan make:test --unit`.
-- **Test Impact Analysis (TIA):** `composer test:tia` runs Pest's experimental Test Impact Analysis: it re-runs only the tests affected by your changes and replays the rest from cache. The first run records the dependency graph and needs PCOV or Xdebug, and TIA needs a git repository with at least one commit. Run `./vendor/bin/pest --parallel --tia --fresh` to re-record the graph. `composer test`, `composer qa` and CI don't use TIA and always run the full suite.
+- **Test Impact Analysis (TIA):** `composer test:tia` runs Pest's experimental Test Impact Analysis: it re-runs only the tests affected by your changes and replays the rest from cache. The first run records the dependency graph and needs PCOV or Xdebug, and TIA needs a git repository with at least one commit. `tests/Pest.php` names `main` as the default branch that TIA compares against; change it if yours differs. Run `./vendor/bin/pest --parallel --tia --fresh` to re-record the graph. `composer test`, `composer qa` and CI don't use TIA and always run the full suite.
 - **Sharding:** CI splits the suite into two shards (`pest --parallel --shard=N/2`), balanced by the timings in `tests/.pest/shards.json`. Refresh the timings with `./vendor/bin/pest --parallel --update-shards` as the suite grows, and change the shard count in `.github/workflows/tests.yml`.
 - **Architecture test:** `tests/ArchTest.php` fails when a Livewire component isn't a class in `app/Livewire`; see [Livewire](#livewire).
 
@@ -190,7 +190,7 @@ FATHOM_SITE_ID=ABCDEFGH
 
 ## Search with Scout and Typesense
 
-`laravel/scout` and `typesense/typesense-php` are installed. Until `SCOUT_DRIVER` is set, Scout uses its `collection` driver, which searches the models in the database and needs no search server. Tests always use it (`phpunit.xml`). To search with Typesense, set:
+`laravel/scout` and `typesense/typesense-php` are installed. Until `SCOUT_DRIVER` is set, Scout uses its `collection` driver, which loads the models from the database and filters them in PHP, so it suits small tables and needs no search server. Tests always use it (`phpunit.xml`). To search with Typesense, set:
 
 ```dotenv
 SCOUT_DRIVER=typesense
@@ -285,7 +285,7 @@ php artisan migrate --force
 - **Files:** attach a Laravel Object Storage bucket as the default disk for private files (`Storage::put()`). For public files, attach a public bucket with the disk name `public` (`Storage::disk('public')`). Don't pass a `visibility` option.
 - **Queues:** add a managed queue. Cloud sets `QUEUE_CONNECTION=cloud`.
 - **Cache:** attach a Laravel Valkey cache. Cloud sets the `REDIS_*` variables and `CACHE_STORE`.
-- **Search:** point Scout at a Typesense server, such as Typesense Cloud, with `SCOUT_DRIVER=typesense`, `TYPESENSE_HOST`, `TYPESENSE_API_KEY`, `TYPESENSE_PORT=443` and `TYPESENSE_PROTOCOL=https` as custom variables. Without them, search uses the database.
+- **Search:** point Scout at a Typesense server, such as Typesense Cloud, with `SCOUT_DRIVER=typesense`, `TYPESENSE_HOST`, `TYPESENSE_API_KEY`, `TYPESENSE_PORT=443` and `TYPESENSE_PROTOCOL=https` as custom variables. Without them, Scout uses its `collection` driver.
 - **WebSockets:** see [Real-time with Reverb](#real-time-with-reverb).
 - **Scheduler:** turn on **Scheduler** on the App cluster. Use `->onOneServer()` on tasks that must run once when the cluster has more than one replica.
 
@@ -305,7 +305,9 @@ Set `SESSION_DRIVER=redis` instead when a Valkey cache is attached. Optional:
 NIGHTWATCH_ENABLED=true
 # Fathom Analytics
 FATHOM_SITE_ID=ABCDEFGH
-``` If the environment has no `APP_KEY`, add the output of `php artisan key:generate --show` too.
+```
+
+If the environment has no `APP_KEY`, add the output of `php artisan key:generate --show` too.
 
 Add only these variables, the search variables, and `BROADCAST_CONNECTION` from [Real-time with Reverb](#real-time-with-reverb). Don't copy your local `.env` into Cloud or push it with `cloud deploy --push-env`: a variable you set replaces the one Cloud sets, so local values such as `DB_HOST`, `MAIL_MAILER=log` and `LOG_STACK` would replace Cloud's database, mail and log settings.
 
@@ -347,6 +349,15 @@ On Laravel Cloud:
 - rector-laravel's upgrade sets for the installed Laravel, Livewire and Faker versions, and its Laravel code quality sets
 - Pest's coding style set, which turns PHPUnit assertions into Pest expectations
 
+## Static analysis
+
+`phpstan.neon` runs Larastan at `level: max` on `app`, `bootstrap/app.php`, `config`, `database`, `routes` and `tests`, with:
+
+- larastan-livewire, which types Livewire's computed properties and `Livewire::test()`
+- Pest's PHPStan plugin, which types `$this` in test closures as the test case bound in `tests/Pest.php`, and the value in `expect()` chains. It also reports expectations that can't fail, such as the `expect(true)->toBeTrue()` placeholder in a test made with `php artisan make:test --pest --unit`
+- `tests/PHPStan/LivewireTesting.stub`, which types the `Livewire::test()` chain after `assertHasErrors()`, `assertDispatched()`, `assertRedirect()` and Livewire's other test assertions
+- `parseModelCastsMethod`, so a `datetime` cast in a model's `casts()` method is a Carbon instance
+
 ## Coding agents
 
 [Laravel Boost](https://laravel.com/docs/boost) is set up for Amp, Claude Code and Codex:
@@ -371,13 +382,14 @@ The generated guidelines and skills come from Laravel Boost, Laravel Nightwatch 
 
 | Service | The orb's `.env` | Open it |
 | --- | --- | --- |
+| App (`php artisan serve`) | | app portal |
 | PostgreSQL 18 | the kit's defaults | |
 | Valkey | `CACHE_STORE=redis`, `SESSION_DRIVER=redis` | |
 | Mailpit | `MAIL_MAILER=smtp`, port 1025 | inbox portal |
 | RustFS | `FILESYSTEM_DISK=s3`, bucket `app` | console portal, `orb` / `orb-secret` |
 | Typesense | `SCOUT_DRIVER=typesense`, API key `orb` | |
 
-Setup installs the dependencies, builds the frontend and creates both databases; it needs no secrets. It writes the `# Orb services` block to `.env` once, so your later edits to it stay. The queue stays on the database. File URLs point at `127.0.0.1:9000` and open only inside the orb; browse stored files in the RustFS console.
+Setup installs the dependencies, builds the frontend and creates both databases; it needs no secrets. It writes the `# Orb services` block to `.env` once, so your later edits to it stay. The app portal serves the built frontend, so run `npm run build` after changing CSS or JavaScript. `bootstrap/app.php` trusts the proxy at `127.0.0.1`, so pages opened through a portal link to its HTTPS URLs. The queue stays on the database. File URLs point at `127.0.0.1:9000` and open only inside the orb; browse stored files in the RustFS console.
 
 ## License
 

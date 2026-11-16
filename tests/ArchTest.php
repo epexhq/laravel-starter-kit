@@ -11,7 +11,7 @@ test('livewire components are not view-based', function (): void {
     $viewBasedComponents = [];
 
     foreach (Finder::create()->files()->in(__DIR__.'/../resources/views')->name('*.php') as $file) {
-        if (preg_match('/new\s+class\b[^{]*\bextends\s+[\\\\\w]*Component\b/', $file->getContents()) === 1) {
+        if (preg_match('/new\s+class\b[^{]*\bextends\b/', $file->getContents()) === 1) {
             $viewBasedComponents[] = 'resources/views/'.$file->getRelativePathname();
         }
     }

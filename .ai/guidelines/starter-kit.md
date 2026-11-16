@@ -5,13 +5,13 @@ These rules come from this project's starter kit and take precedence over the ge
 ## Checks
 
 - Run `composer qa` before every commit. It applies Rector, applies Pint, runs Larastan at max level (including `tests/`), then runs the full test suite. Narrower checks such as `vendor/bin/pint --dirty` or a filtered test run are fine while you work, but they don't replace `composer qa`.
-- `composer test` runs the full suite. `composer test:tia` runs only the tests affected by your changes with Pest's experimental Test Impact Analysis; it needs PCOV or Xdebug and a git repository with at least one commit. Use it for fast feedback, never as a replacement for `composer qa`.
+- `composer test` runs the full suite. `composer test:tia` runs only the tests affected by your changes with Pest's experimental Test Impact Analysis; it needs PCOV or Xdebug and a git repository with at least one commit, and `tests/Pest.php` names `main` as the default branch. Use it for fast feedback, never as a replacement for `composer qa`.
 - Commit `_ide_helper_models.php` after changing models or migrations: run `composer ide-helper` against a migrated database.
 
 ## Database
 
 - PostgreSQL only. Don't add SQLite or MySQL support, and use PostgreSQL features freely.
-- Tests use the app's database name with `_testing` appended, such as `laravel_testing`. `phpunit.xml` forces `APP_ENV=testing` and clears `DB_URL`; don't point tests at another database.
+- Tests use the app's database name with `_testing` appended, such as `laravel_testing`, however you run them. `phpunit.xml` sets `APP_ENV=testing`, clears `DB_URL`, ignores a cached config and sets the cache, mail, queue, session, filesystem, broadcasting, search and Nightwatch drivers, over any exported or `.env` value; don't point tests at another database or service.
 
 ## Models
 
