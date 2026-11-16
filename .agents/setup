@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-# Prepares an Amp orb (Debian) for this repository: PHP 8.4, PostgreSQL 18, Valkey, Mailpit, RustFS,
-# Typesense and Composer, the orb's .env, the dependencies, the frontend build and both databases.
+# Prepares an Amp orb (Debian) for this repository: PHP 8.4, PostgreSQL 18, Valkey, Mailpit, RustFS
+# and Composer, the orb's .env, the dependencies, the frontend build and both databases.
 set -euo pipefail
 
 step() { printf '\n==> %s\n' "$*"; }
@@ -30,19 +30,17 @@ fi
 
 # Release binaries for .amp/services.yaml, installed to /usr/local/bin. Each archive's SHA-256 is
 # checked before it is unpacked. Valkey publishes .sha256 files and Mailpit and RustFS publish
-# digests on their GitHub releases; Typesense publishes none, so its sums come from two downloads.
+# digests on their GitHub releases.
 case "$(dpkg --print-architecture)" in
   amd64)
     valkey=valkey-9.1.3-jammy-x86_64 valkey_sha256=939667f38a99972af6d4ad7045a97876d6db6c4f331f6609290dab2e354fff1e
     mailpit=mailpit-linux-amd64 mailpit_sha256=84d7fe375ebef25df26758984dc0d5d5e17d8c0734cb2e77be7873b14ab51716
     rustfs=rustfs-linux-x86_64-musl-v1.0.5 rustfs_sha256=3d9d42bb4cb7a1589266090d4f9f8238465506cdd9d5e897193377dd6f610aac
-    typesense=typesense-server-30.2-linux-amd64 typesense_sha256=cd791605e7c6cc7be457794f534cd4b9f9d361781adb10e40020efc22840ebc3
     ;;
   arm64)
     valkey=valkey-9.1.3-jammy-arm64 valkey_sha256=33e0ac674548424746528b947ef65538d624ef69478445158d690d02ce6c8e36
     mailpit=mailpit-linux-arm64 mailpit_sha256=3c5f076cb676d6980e47da030861c6d60f1f5614103dea93cccbcdfc43198e12
     rustfs=rustfs-linux-aarch64-musl-v1.0.5 rustfs_sha256=082834d38167f2fa581e98d14a7126e3e203153e38ae5882eca8d02a4207d12f
-    typesense=typesense-server-30.2-linux-arm64 typesense_sha256=a9b9d6e2927c863900306290e8532c17f66bdff34ef2ad043b24ed4ccec8a6bc
     ;;
 esac
 
@@ -75,13 +73,8 @@ if ! command -v rustfs >/dev/null; then
   install_release "https://github.com/rustfs/rustfs/releases/download/1.0.5/$rustfs.zip" "$rustfs_sha256" rustfs
 fi
 
-if ! command -v typesense-server >/dev/null; then
-  step 'Installing Typesense'
-  install_release "https://dl.typesense.org/releases/30.2/$typesense.tar.gz" "$typesense_sha256" typesense-server
-fi
-
 # RustFS serves each directory in its data directory as a bucket.
-mkdir -p "$HOME/.local/share/rustfs/app" "$HOME/.local/share/typesense"
+mkdir -p "$HOME/.local/share/rustfs/app"
 
 if ! command -v composer >/dev/null; then
   step 'Installing Composer'
@@ -105,13 +98,12 @@ fi
 
 [ -f .env ] || cp -- .env.example .env
 
-# Point mail, files, cache, sessions and search at the orb services, once per .env.
+# Point mail, files, cache and sessions at the orb services, once per .env.
 orb_env=(
   MAIL_MAILER=smtp MAIL_PORT=1025
   FILESYSTEM_DISK=s3 AWS_ACCESS_KEY_ID=orb AWS_SECRET_ACCESS_KEY=orb-secret AWS_DEFAULT_REGION=us-east-1
   AWS_BUCKET=app AWS_ENDPOINT=http://127.0.0.1:9000 AWS_USE_PATH_STYLE_ENDPOINT=true
   CACHE_STORE=redis SESSION_DRIVER=redis
-  SCOUT_DRIVER=typesense TYPESENSE_HOST=127.0.0.1 TYPESENSE_API_KEY=orb
 )
 if ! grep -q '^# Orb services' .env; then
   step 'Pointing .env at the orb services'

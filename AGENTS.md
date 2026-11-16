@@ -33,7 +33,7 @@ These rules come from this project's starter kit and take precedence over the ge
 
 ## Search
 
-- Scout uses Typesense when `SCOUT_DRIVER=typesense` and the `collection` driver otherwise. Typesense doesn't support `scout:sync-index-settings`; define the schema and search parameters on the model with `typesenseCollectionSchema()` and `typesenseSearchParameters()`.
+- Scout uses its `collection` driver unless `SCOUT_DRIVER` is set, and tests always use it. `SCOUT_DRIVER=database` searches the model's PostgreSQL table directly. Typesense isn't installed; add it only when the task asks for it, as the README's "Adding Typesense" section describes.
 
 ## Documentation
 

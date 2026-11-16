@@ -1,6 +1,6 @@
 # Laravel Starter Kit
 
-A Laravel starter kit: an empty Laravel app on PostgreSQL with Livewire, Flux, a layout and a welcome page, plus a strict quality toolchain, Laravel Scout with Typesense, Resend for email, Fathom Analytics, Laravel Nightwatch, Laravel Cloud support and Laravel Boost for coding agents. It has no authentication and no `User` model.
+A Laravel starter kit: an empty Laravel app on PostgreSQL with Livewire, Flux, a layout and a welcome page, plus a strict quality toolchain, Laravel Scout, Resend for email, Fathom Analytics, Laravel Nightwatch, Laravel Cloud support and Laravel Boost for coding agents. It has no authentication and no `User` model.
 
 ## What's included
 
@@ -17,7 +17,7 @@ A Laravel starter kit: an empty Laravel app on PostgreSQL with Livewire, Flux, a
 | IDE support | [barryvdh/laravel-ide-helper](https://github.com/barryvdh/laravel-ide-helper) | Model docs in `_ide_helper_models.php` |
 | Email | [Resend](https://resend.com) (`resend/resend-php`) | Default mailer in `config/mail.php` |
 | Analytics | [Fathom Analytics](https://usefathom.com) | Off until `FATHOM_SITE_ID` is set; see [Analytics with Fathom](#analytics-with-fathom) |
-| Search | [Laravel Scout](https://laravel.com/docs/scout) + [Typesense](https://typesense.org) (`typesense/typesense-php`) | Scout's `collection` driver until `SCOUT_DRIVER=typesense`; see [Search with Scout and Typesense](#search-with-scout-and-typesense) |
+| Search | [Laravel Scout](https://laravel.com/docs/scout) | Scout's `collection` driver until `SCOUT_DRIVER` is set; Typesense is an optional install; see [Search with Scout](#search-with-scout) |
 | Monitoring | [Laravel Nightwatch](https://nightwatch.laravel.com) | `config/nightwatch.php` published, disabled until `NIGHTWATCH_ENABLED=true` |
 | Hosting | [Laravel Cloud](https://cloud.laravel.com) | `league/flysystem-aws-s3-v3` for Object Storage, `aws/aws-sdk-php` for managed queues; see [Deploy to Laravel Cloud](#deploy-to-laravel-cloud) |
 | Coding agents | [Laravel Boost](https://laravel.com/docs/boost) | MCP server, guidelines and skills for Amp, Claude Code and Codex; see [Coding agents](#coding-agents) |
@@ -27,7 +27,7 @@ A Laravel starter kit: an empty Laravel app on PostgreSQL with Livewire, Flux, a
 
 - PHP 8.4 or newer
 - Composer 2
-- Node.js `^22.18`, `^24.11` or 26 and newer, and npm
+- Node.js 26, the LTS version in `.nvmrc` (`nvm use` reads it), and npm
 - PostgreSQL, reachable with the defaults in `config/database.php` (`127.0.0.1:5432`, user `postgres`, no password)
 - To create a project with `laravel new --using`: the Laravel installer (tested with 5.33) and `npx`
 - [PCOV](https://github.com/krakjoe/pcov) or Xdebug, only for `composer test:tia`
@@ -120,7 +120,7 @@ composer dev
 2. Then, in parallel:
    - **Larastan** (`larastan.yml`) at max level, check only.
    - **Tests** (`tests.yml`) in two time-balanced shards.
-   - **Frontend build** (`build.yml`): `npm ci` and `npm run build` on Node 22. It installs the Composer dependencies too, because `resources/css/app.css` imports Flux's CSS from `vendor/`.
+   - **Frontend build** (`build.yml`): `npm ci` and `npm run build` on the Node version in `.nvmrc`. It installs the Composer dependencies too, because `resources/css/app.css` imports Flux's CSS from `vendor/`.
 
 All of them install PHP 8.4 with `.github/actions/setup-php`; change the version there. Autofix and the tests start a PostgreSQL 18 container with `.github/actions/setup-database`. CI needs no secrets.
 
@@ -188,9 +188,22 @@ MAIL_FROM_ADDRESS="hello@your-verified-domain.com"
 FATHOM_SITE_ID=ABCDEFGH
 ```
 
-## Search with Scout and Typesense
+## Search with Scout
 
-`laravel/scout` and `typesense/typesense-php` are installed. Until `SCOUT_DRIVER` is set, Scout uses its `collection` driver, which loads the models from the database and filters them in PHP, so it suits small tables and needs no search server. Tests always use it (`phpunit.xml`). To search with Typesense, set:
+`laravel/scout` is installed without a search server. Until `SCOUT_DRIVER` is set, Scout uses its `collection` driver, which loads the models from the database and filters them in PHP, so it suits small tables. Tests always use it (`phpunit.xml`). For larger tables, set `SCOUT_DRIVER=database`: Scout's [database engine](https://laravel.com/docs/scout#database-engine) searches the model's table with `ilike` queries, or PostgreSQL full-text search on the columns marked `#[SearchUsingFullText]`, and needs no index.
+
+Make a model searchable with Scout's `Searchable` trait, then search with `Post::search('laravel')->get()`.
+
+### Adding Typesense
+
+The kit doesn't install [Typesense](https://typesense.org). To use it in a project, run:
+
+```bash
+composer config allow-plugins.php-http/discovery false
+composer require typesense/typesense-php
+```
+
+The first command answers Composer's question about the `php-http/discovery` plugin that the Typesense client requires; at runtime the client finds Guzzle, which Laravel already installs. Commit `composer.json` and `composer.lock`. Then set:
 
 ```dotenv
 SCOUT_DRIVER=typesense
@@ -198,9 +211,9 @@ TYPESENSE_HOST=127.0.0.1
 TYPESENSE_API_KEY=your-api-key
 ```
 
-`TYPESENSE_PORT` (default `8108`) and `TYPESENSE_PROTOCOL` (default `http`) reach other servers, such as [Typesense Cloud](https://cloud.typesense.org) on `443` and `https`. Amp orbs run Typesense and set these variables; see [Amp orbs](#amp-orbs).
+`TYPESENSE_PORT` (default `8108`) and `TYPESENSE_PROTOCOL` (default `http`) reach other servers, such as [Typesense Cloud](https://cloud.typesense.org) on `443` and `https`. On Laravel Cloud, add these as custom variables. CI needs nothing: the tests use the `collection` driver.
 
-Make a model searchable with Scout's `Searchable` trait. Typesense also needs a collection schema with the fields from `toSearchableArray()`, and the fields to search, both defined on the model (Typesense doesn't support `php artisan scout:sync-index-settings`):
+Typesense also needs a collection schema with the fields from `toSearchableArray()`, and the fields to search, both defined on the model (Typesense doesn't support `php artisan scout:sync-index-settings`):
 
 ```php
 namespace App\Models;
@@ -243,7 +256,7 @@ class Post extends Model
 }
 ```
 
-Search with `Post::search('laravel')->get()`. Scout indexes a model when it's saved; to index existing records, run `php artisan scout:import "App\Models\Post"`.
+Scout indexes a model when it's saved; to index existing records, run `php artisan scout:import "App\Models\Post"`.
 
 ## Monitoring with Nightwatch
 
@@ -260,7 +273,7 @@ Nightwatch only sends data while its agent runs next to your app, so keep `php a
 
 Create an application in [Laravel Cloud](https://cloud.laravel.com) from your project's repository, then set up its environment.
 
-**Settings:** PHP 8.4 and Node 22.
+**Settings:** PHP 8.4 and Node 26.
 
 **Build commands:**
 
@@ -285,7 +298,7 @@ php artisan migrate --force
 - **Files:** attach a Laravel Object Storage bucket as the default disk for private files (`Storage::put()`). For public files, attach a public bucket with the disk name `public` (`Storage::disk('public')`). Don't pass a `visibility` option.
 - **Queues:** add a managed queue. Cloud sets `QUEUE_CONNECTION=cloud`.
 - **Cache:** attach a Laravel Valkey cache. Cloud sets the `REDIS_*` variables and `CACHE_STORE`.
-- **Search:** point Scout at a Typesense server, such as Typesense Cloud, with `SCOUT_DRIVER=typesense`, `TYPESENSE_HOST`, `TYPESENSE_API_KEY`, `TYPESENSE_PORT=443` and `TYPESENSE_PROTOCOL=https` as custom variables. Without them, Scout uses its `collection` driver.
+- **Search:** Scout needs no resource. Set `SCOUT_DRIVER=database` as a custom variable to search the database instead of the `collection` driver, or see [Adding Typesense](#adding-typesense).
 - **WebSockets:** see [Real-time with Reverb](#real-time-with-reverb).
 - **Scheduler:** turn on **Scheduler** on the App cluster. Use `->onOneServer()` on tasks that must run once when the cluster has more than one replica.
 
@@ -309,7 +322,7 @@ FATHOM_SITE_ID=ABCDEFGH
 
 If the environment has no `APP_KEY`, add the output of `php artisan key:generate --show` too.
 
-Add only these variables, the search variables, and `BROADCAST_CONNECTION` from [Real-time with Reverb](#real-time-with-reverb). Don't copy your local `.env` into Cloud or push it with `cloud deploy --push-env`: a variable you set replaces the one Cloud sets, so local values such as `DB_HOST`, `MAIL_MAILER=log` and `LOG_STACK` would replace Cloud's database, mail and log settings.
+Add only these variables, `SCOUT_DRIVER` and the Typesense variables if you use them, and `BROADCAST_CONNECTION` from [Real-time with Reverb](#real-time-with-reverb). Don't copy your local `.env` into Cloud or push it with `cloud deploy --push-env`: a variable you set replaces the one Cloud sets, so local values such as `DB_HOST`, `MAIL_MAILER=log` and `LOG_STACK` would replace Cloud's database, mail and log settings.
 
 **Cloud CLI.** To deploy and manage Cloud from the terminal, and for the `deploying-to-cloud` agent skill, install the [Cloud CLI](https://cloud.laravel.com/docs/api/cli) in the project and run it from `vendor/bin`:
 
@@ -363,7 +376,7 @@ On Laravel Cloud:
 [Laravel Boost](https://laravel.com/docs/boost) is set up for Amp, Claude Code and Codex:
 
 - **MCP server** (`php artisan boost:mcp`): tools to search the docs for the installed package versions (`search-docs`), read the database schema, run read-only queries, read the app and browser logs and the last error, and resolve app URLs.
-- **Guidelines** in `AGENTS.md` (Amp, Codex) and `CLAUDE.md` (Claude Code): first the project's conventions from `.ai/guidelines/starter-kit.md` (run `composer qa` before every commit, PostgreSQL only, no `User` model, class-based Livewire components, `composer test:tia`, what the cache can hold, Typesense index settings), then Boost's guidelines for the installed versions of Laravel, Livewire, Pest and Pint. To change the project's conventions, edit or add files in `.ai/guidelines/` and run `php artisan boost:update`; Boost rewrites everything inside the `<laravel-boost-guidelines>` tags.
+- **Guidelines** in `AGENTS.md` (Amp, Codex) and `CLAUDE.md` (Claude Code): first the project's conventions from `.ai/guidelines/starter-kit.md` (run `composer qa` before every commit, PostgreSQL only, no `User` model, class-based Livewire components, `composer test:tia`, what the cache can hold, which Scout driver to use), then Boost's guidelines for the installed versions of Laravel, Livewire, Pest and Pint. To change the project's conventions, edit or add files in `.ai/guidelines/` and run `php artisan boost:update`; Boost rewrites everything inside the `<laravel-boost-guidelines>` tags.
 - **Skills** in `.agents/skills/` (Amp, Codex) and `.claude/skills/` (Claude Code): `laravel-best-practices`, `testing-best-practices`, `livewire-development`, `fluxui-development`, `tailwindcss-development`, `blaze-optimize`, `configure-nightwatch`, `scout-development`, `deploying-to-cloud` and `infer-conventions`.
 
 | File | Contents |
@@ -387,7 +400,6 @@ The generated guidelines and skills come from Laravel Boost, Laravel Nightwatch 
 | Valkey | `CACHE_STORE=redis`, `SESSION_DRIVER=redis` | |
 | Mailpit | `MAIL_MAILER=smtp`, port 1025 | inbox portal |
 | RustFS | `FILESYSTEM_DISK=s3`, bucket `app` | console portal, `orb` / `orb-secret` |
-| Typesense | `SCOUT_DRIVER=typesense`, API key `orb` | |
 
 Setup installs the dependencies, builds the frontend and creates both databases; it needs no secrets. It writes the `# Orb services` block to `.env` once, so your later edits to it stay. The app portal serves the built frontend, so run `npm run build` after changing CSS or JavaScript. Setup also adds `TRUSTED_PROXIES=127.0.0.1` to `.env`, which `config/trustedproxy.php` reads, so pages opened through a portal link to its HTTPS URLs. Leave `TRUSTED_PROXIES` unset on Laravel Cloud. The queue stays on the database. File URLs point at `127.0.0.1:9000` and open only inside the orb; browse stored files in the RustFS console.
 
