@@ -120,6 +120,10 @@ if ! grep -q '^# Orb services' .env; then
   printf '%s\n' "${orb_env[@]}" >> .env
 fi
 
+# The app portal's proxy connects from 127.0.0.1 (config/trustedproxy.php). Added on its own so
+# orbs whose .env already has the block above get it too.
+grep -q '^TRUSTED_PROXIES=' .env || echo 'TRUSTED_PROXIES=127.0.0.1' >> .env
+
 step 'Installing dependencies'
 composer install --no-interaction --prefer-dist --no-progress
 npm ci --no-audit --no-fund

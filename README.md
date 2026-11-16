@@ -389,7 +389,7 @@ The generated guidelines and skills come from Laravel Boost, Laravel Nightwatch 
 | RustFS | `FILESYSTEM_DISK=s3`, bucket `app` | console portal, `orb` / `orb-secret` |
 | Typesense | `SCOUT_DRIVER=typesense`, API key `orb` | |
 
-Setup installs the dependencies, builds the frontend and creates both databases; it needs no secrets. It writes the `# Orb services` block to `.env` once, so your later edits to it stay. The app portal serves the built frontend, so run `npm run build` after changing CSS or JavaScript. `bootstrap/app.php` trusts the proxy at `127.0.0.1`, so pages opened through a portal link to its HTTPS URLs. The queue stays on the database. File URLs point at `127.0.0.1:9000` and open only inside the orb; browse stored files in the RustFS console.
+Setup installs the dependencies, builds the frontend and creates both databases; it needs no secrets. It writes the `# Orb services` block to `.env` once, so your later edits to it stay. The app portal serves the built frontend, so run `npm run build` after changing CSS or JavaScript. Setup also adds `TRUSTED_PROXIES=127.0.0.1` to `.env`, which `config/trustedproxy.php` reads, so pages opened through a portal link to its HTTPS URLs. Leave `TRUSTED_PROXIES` unset on Laravel Cloud. The queue stays on the database. File URLs point at `127.0.0.1:9000` and open only inside the orb; browse stored files in the RustFS console.
 
 ## License
 
