@@ -29,6 +29,7 @@ A Laravel starter kit: an empty Laravel app on PostgreSQL with Livewire, Flux, a
 - Composer 2
 - Node.js 26, the LTS version in `.nvmrc` (`nvm use` reads it), and npm
 - PostgreSQL, reachable with the kit's defaults (`127.0.0.1:5432`, user `postgres`, no password)
+- Valkey or Redis at `127.0.0.1:6379` and PHP's `redis` extension, for sessions (`SESSION_DRIVER` defaults to `redis`)
 - To create a project with `laravel new --using`: the Laravel installer (tested with 5.33) and `npx`
 - [PCOV](https://github.com/krakjoe/pcov) or Xdebug, only for `composer test:tia`
 
@@ -172,7 +173,7 @@ Every other place that runs `composer install` then needs the credentials:
 
 ## Email with Resend
 
-`config/services.php` reads `RESEND_API_KEY` for the `resend` mailer in `config/mail.php`. `MAIL_MAILER` defaults to `log`, so local emails are written to `storage/logs/laravel.log` instead of being sent. In production:
+`config/services.php` reads `RESEND_API_KEY` for the `resend` mailer in `config/mail.php`. `MAIL_MAILER` defaults to `smtp` on `127.0.0.1:1025`, Mailpit's SMTP port, so local emails land in Mailpit; set `MAIL_MAILER=log` to write them to `storage/logs/laravel.log` instead. In production:
 
 ```dotenv
 MAIL_MAILER=resend
@@ -327,10 +328,9 @@ Cloud's startup and readiness health checks use the `/up` route from `bootstrap/
 
 ```dotenv
 APP_NAME="My App"
-SESSION_DRIVER=database
 ```
 
-Set `SESSION_DRIVER=redis` instead when a Valkey cache is attached. Optional:
+Sessions default to `redis`, so attach a Valkey cache, or set `SESSION_DRIVER=database` without one. Optional:
 
 ```dotenv
 # Fathom Analytics
@@ -415,8 +415,8 @@ The generated guidelines and skills come from Laravel Boost, Laravel Nightwatch 
 | --- | --- | --- |
 | App (`php artisan serve`) | | app portal |
 | PostgreSQL 18 | the kit's defaults | |
-| Valkey | `CACHE_STORE=redis`, `SESSION_DRIVER=redis`, `QUEUE_CONNECTION=redis` | |
-| Mailpit | `MAIL_MAILER=smtp`, port 1025 | inbox portal |
+| Valkey | `CACHE_STORE=redis`, `QUEUE_CONNECTION=redis`; sessions use it by default | |
+| Mailpit | the kit's defaults (`smtp`, port 1025) | inbox portal |
 | RustFS | `FILESYSTEM_DISK=s3`, bucket `app` | console portal, `orb` / `orb-secret` |
 
 Setup installs the dependencies, builds the frontend and creates both databases; it needs no secrets. It writes the `# Orb services` block to `.env` once, so your later edits to it stay. The app portal serves the built frontend, so run `npm run build` after changing CSS or JavaScript. The block also sets `TRUSTED_PROXIES=127.0.0.1`, which `config/trustedproxy.php` reads, so pages opened through a portal link to its HTTPS URLs. Leave `TRUSTED_PROXIES` unset on Laravel Cloud. Jobs run when `php artisan queue:work` or `composer dev` is running. File URLs point at `127.0.0.1:9000` and open only inside the orb; browse stored files in the RustFS console.

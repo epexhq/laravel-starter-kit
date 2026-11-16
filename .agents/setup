@@ -100,13 +100,13 @@ fi
 
 [ -f .env ] || cp -- .env.example .env
 
-# Point mail, files, cache, sessions and the queue at the orb services, once per .env. The app
+# Point files, the cache and the queue at the orb services, once per .env. Mail and sessions
+# already default to Mailpit's SMTP port and Valkey (config/mail.php, config/session.php). The app
 # portal's proxy connects from 127.0.0.1, which TRUSTED_PROXIES trusts (config/trustedproxy.php).
 orb_env=(
-  MAIL_MAILER=smtp MAIL_PORT=1025
   FILESYSTEM_DISK=s3 AWS_ACCESS_KEY_ID=orb AWS_SECRET_ACCESS_KEY=orb-secret AWS_DEFAULT_REGION=us-east-1
   AWS_BUCKET=app AWS_ENDPOINT=http://127.0.0.1:9000 AWS_USE_PATH_STYLE_ENDPOINT=true
-  CACHE_STORE=redis SESSION_DRIVER=redis QUEUE_CONNECTION=redis
+  CACHE_STORE=redis QUEUE_CONNECTION=redis
   TRUSTED_PROXIES=127.0.0.1
 )
 if ! grep -q '^# Orb services' .env; then
