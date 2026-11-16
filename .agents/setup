@@ -79,6 +79,8 @@ mkdir -p "$HOME/.local/share/rustfs/app"
 if ! command -v composer >/dev/null; then
   step 'Installing Composer'
   curl -fsSLo /tmp/composer-setup.php https://getcomposer.org/installer
+  # https://getcomposer.org/doc/faqs/how-to-install-composer-programmatically.md
+  echo "$(curl -fsSL https://composer.github.io/installer.sig)  /tmp/composer-setup.php" | sha384sum --check --quiet
   sudo php /tmp/composer-setup.php --install-dir=/usr/local/bin --filename=composer --quiet
   rm /tmp/composer-setup.php
 fi
@@ -98,12 +100,14 @@ fi
 
 [ -f .env ] || cp -- .env.example .env
 
-# Point mail, files, cache and sessions at the orb services, once per .env.
+# Point files, the cache and the queue at the orb services, once per .env. Mail and sessions
+# already default to Mailpit's SMTP port and Valkey (config/mail.php, config/session.php). The app
+# portal's proxy connects from 127.0.0.1, which TRUSTED_PROXIES trusts (config/trustedproxy.php).
 orb_env=(
-  MAIL_MAILER=smtp MAIL_PORT=1025
   FILESYSTEM_DISK=s3 AWS_ACCESS_KEY_ID=orb AWS_SECRET_ACCESS_KEY=orb-secret AWS_DEFAULT_REGION=us-east-1
   AWS_BUCKET=app AWS_ENDPOINT=http://127.0.0.1:9000 AWS_USE_PATH_STYLE_ENDPOINT=true
-  CACHE_STORE=redis SESSION_DRIVER=redis
+  CACHE_STORE=redis QUEUE_CONNECTION=redis
+  TRUSTED_PROXIES=127.0.0.1
 )
 if ! grep -q '^# Orb services' .env; then
   step 'Pointing .env at the orb services'
@@ -111,10 +115,6 @@ if ! grep -q '^# Orb services' .env; then
   printf '\n# Orb services (.amp/services.yaml)\n' >> .env
   printf '%s\n' "${orb_env[@]}" >> .env
 fi
-
-# The app portal's proxy connects from 127.0.0.1 (config/trustedproxy.php). Added on its own so
-# orbs whose .env already has the block above get it too.
-grep -q '^TRUSTED_PROXIES=' .env || echo 'TRUSTED_PROXIES=127.0.0.1' >> .env
 
 step 'Installing dependencies'
 composer install --no-interaction --prefer-dist --no-progress

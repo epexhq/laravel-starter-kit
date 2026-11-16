@@ -14,8 +14,8 @@
 !/.codex/config.toml
 /.cursor/
 /.env
-/.env.backup
-/.env.production
+/.env.*
+!/.env.example
 /.idea
 /.nova
 /.phpstorm.meta.php
