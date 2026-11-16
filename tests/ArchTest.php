@@ -3,9 +3,10 @@
 use Livewire\Component;
 use Symfony\Component\Finder\Finder;
 
-arch('livewire components are classes in app/Livewire', function (): void {
-    expect(Component::class)->toOnlyBeUsedIn('App\Livewire');
-});
+arch('livewire components are classes in app/Livewire')
+    ->expect('App')
+    ->not->toExtend(Component::class)
+    ->ignoring('App\Livewire');
 
 test('livewire components are not view-based', function (): void {
     $viewBasedComponents = [];
