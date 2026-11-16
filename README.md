@@ -419,7 +419,7 @@ The generated guidelines and skills come from Laravel Boost, Laravel Nightwatch 
 | Mailpit | `MAIL_MAILER=smtp`, port 1025 | inbox portal |
 | RustFS | `FILESYSTEM_DISK=s3`, bucket `app` | console portal, `orb` / `orb-secret` |
 
-Setup installs the dependencies, builds the frontend and creates both databases; it needs no secrets. It writes the `# Orb services` block to `.env` once, so your later edits to it stay; on an orb set up earlier, it moves a database queue to Valkey and removes the old Typesense settings. The app portal serves the built frontend, so run `npm run build` after changing CSS or JavaScript. Setup also adds `TRUSTED_PROXIES=127.0.0.1` to `.env`, which `config/trustedproxy.php` reads, so pages opened through a portal link to its HTTPS URLs. Leave `TRUSTED_PROXIES` unset on Laravel Cloud. Jobs run when `php artisan queue:work` or `composer dev` is running. File URLs point at `127.0.0.1:9000` and open only inside the orb; browse stored files in the RustFS console.
+Setup installs the dependencies, builds the frontend and creates both databases; it needs no secrets. It writes the `# Orb services` block to `.env` once, so your later edits to it stay. The app portal serves the built frontend, so run `npm run build` after changing CSS or JavaScript. The block also sets `TRUSTED_PROXIES=127.0.0.1`, which `config/trustedproxy.php` reads, so pages opened through a portal link to its HTTPS URLs. Leave `TRUSTED_PROXIES` unset on Laravel Cloud. Jobs run when `php artisan queue:work` or `composer dev` is running. File URLs point at `127.0.0.1:9000` and open only inside the orb; browse stored files in the RustFS console.
 
 ## License
 
