@@ -172,7 +172,7 @@ Every other place that runs `composer install` then needs the credentials:
 
 ## Email with Resend
 
-`config/services.php` reads `RESEND_API_KEY` for the `resend` mailer in `config/mail.php`. `.env.example` sets `MAIL_MAILER=log`, so local emails are written to `storage/logs/laravel.log` instead of being sent. In production:
+`config/services.php` reads `RESEND_API_KEY` for the `resend` mailer in `config/mail.php`. `MAIL_MAILER` defaults to `log`, so local emails are written to `storage/logs/laravel.log` instead of being sent. In production:
 
 ```dotenv
 MAIL_MAILER=resend
@@ -341,7 +341,7 @@ NIGHTWATCH_ENABLED=false
 
 If the environment has no `APP_KEY`, add the output of `php artisan key:generate --show` too.
 
-Add only these variables, `SCOUT_DRIVER` and the Typesense variables if you use them, and `BROADCAST_CONNECTION` from [Real-time with Reverb](#real-time-with-reverb). Don't copy your local `.env` into Cloud or push it with `cloud deploy --push-env`: a variable you set replaces the one Cloud sets, so local values such as `DB_HOST`, `MAIL_MAILER=log` and `LOG_STACK` would replace Cloud's database, mail and log settings.
+Add only these variables, `SCOUT_DRIVER` and the Typesense variables if you use them, and `BROADCAST_CONNECTION` from [Real-time with Reverb](#real-time-with-reverb). Don't copy your local `.env` into Cloud or push it with `cloud deploy --push-env`: a variable you set replaces the one Cloud sets, so local values such as `DB_USERNAME`, `MAIL_MAILER` and `LOG_STACK` would replace Cloud's database, mail and log settings.
 
 **Cloud CLI.** To deploy and manage Cloud from the terminal, and for the `deploying-to-cloud` agent skill, install the [Cloud CLI](https://cloud.laravel.com/docs/api/cli) in the project and run it from `vendor/bin`:
 
@@ -383,7 +383,7 @@ On Laravel Cloud:
 
 ## Static analysis
 
-`phpstan.neon` runs Larastan at `level: max` on `app`, `bootstrap/app.php`, `config`, `database`, `routes` and `tests`, except `config/boost.php`, `config/filesystems.php` and `config/nightwatch.php`, which are kept as Laravel and the packages publish them. It uses:
+`phpstan.neon` runs Larastan at `level: max` on `app`, `bootstrap/app.php`, `config`, `database`, `routes` and `tests`, with:
 
 - larastan-livewire, which types Livewire's computed properties and `Livewire::test()`
 - Pest's PHPStan plugin, which types `$this` in test closures as the test case bound in `tests/Pest.php`, and the value in `expect()` chains. It also reports expectations that can't fail, such as the `expect(true)->toBeTrue()` placeholder in a test made with `php artisan make:test --pest --unit`
