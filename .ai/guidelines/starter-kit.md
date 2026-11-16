@@ -20,17 +20,21 @@ These rules come from this project's starter kit and take precedence over the ge
 
 ## Livewire
 
-- Write Livewire components as classes in `app/Livewire` with their views in `resources/views/livewire`. `php artisan make:livewire` creates this form. Single-file and multi-file components are disabled, and `tests/ArchTest.php` fails on them.
+- Write Livewire components as classes in `app/Livewire` with their views in `resources/views/livewire`. `php artisan make:livewire` creates this form. Don't create single-file or multi-file components: Livewire can still render them, but `tests/ArchTest.php` fails on them.
 - Full-page components use the `layouts::app` layout (`resources/views/layouts/app.blade.php`), which includes the page head partial. Register them with `Route::livewire('/path', App\Livewire\Page::class)`.
 - The kit installs free Flux (`livewire/flux`). Use Flux Pro components only when `composer.json` requires `livewire/flux-pro`.
 
 ## Cache
 
-- `config/cache.php` sets `serializable_classes => false`, so cached objects come back as `__PHP_Incomplete_Class`. Cache arrays and scalars, such as `->toArray()` or a list of IDs, never models or collections.
+- `config/cache.php` sets `serializable_classes => false`, so cached objects come back as `__PHP_Incomplete_Class`. Cache arrays and scalars, such as `->toArray()` or a list of IDs, never models or collections, even where a skill's example caches them. Tests use the `array` store, which keeps objects, so they won't catch this.
 
 ## Search
 
-- Scout uses its `collection` driver unless `SCOUT_DRIVER` is set, and tests always use it. `SCOUT_DRIVER=database` searches the model's PostgreSQL table directly. Typesense isn't installed; add it only when the task asks for it, as the README's "Adding Typesense" section describes.
+- Scout uses its `collection` driver unless `SCOUT_DRIVER` is set, and tests always use it. `SCOUT_DRIVER=database` searches the model's PostgreSQL table directly. Typesense isn't installed; add it only when the task asks for it, as the README's "Adding Typesense" section describes. Typesense doesn't support `php artisan scout:sync-index-settings`; define its schema on the model.
+
+## Monitoring
+
+- To redact more in Nightwatch, add to the defaults in `config/nightwatch.php` (`redact_payload_fields`, `redact_headers`) rather than replacing them.
 
 ## Documentation
 

@@ -1,8 +1,8 @@
 {
     "$schema": "https://getcomposer.org/schema.json",
-    "name": "laravel/laravel",
+    "name": "epexhq/laravel-starter-kit",
     "type": "project",
-    "description": "A Laravel application.",
+    "description": "Epex's Laravel starter kit: PostgreSQL, Livewire, Flux and a strict quality toolchain.",
     "keywords": [
         "laravel",
         "framework"

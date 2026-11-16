@@ -29,7 +29,7 @@ A Laravel starter kit: an empty Laravel app on PostgreSQL with Livewire, Flux, a
 - Composer 2
 - Node.js 26, the LTS version in `.nvmrc` (`nvm use` reads it), and npm
 - PostgreSQL, reachable with the kit's defaults (`127.0.0.1:5432`, user `postgres`, no password)
-- Valkey or Redis at `127.0.0.1:6379` and PHP's `redis` extension, for sessions (`SESSION_DRIVER` defaults to `redis`)
+- Valkey or Redis at `127.0.0.1:6379` and PHP's `redis` extension, for the cache, the queue and sessions (`CACHE_STORE`, `QUEUE_CONNECTION` and `SESSION_DRIVER` default to `redis`). Without one, set all three to `database` in `.env`
 - To create a project with `laravel new --using`: the Laravel installer (tested with 5.33) and `npx`
 - [PCOV](https://github.com/krakjoe/pcov) or Xdebug, only for `composer test:tia`
 
@@ -117,7 +117,7 @@ composer dev
 
 1. **Autofix** (`autofix.yml`) runs Rector, then IDE Helper against a migrated database, then Pint.
    - On pull requests from branches of this repository, it commits any change as `github-actions[bot]` and pushes it to the branch.
-   - On pushes to `main` and on pull requests from forks, it runs in check mode (`rector --dry-run`, `pint --test`, and a comparison of the regenerated `_ide_helper_models.php`) and fails when anything would change. It never commits.
+   - On pushes to `main`, on pull requests from forks and on Dependabot's pull requests, it runs in check mode (`rector --dry-run`, `pint --test`, and a comparison of the regenerated `_ide_helper_models.php`) and fails when anything would change. It never commits.
 2. Then, in parallel:
    - **Larastan** (`larastan.yml`) at max level, check only.
    - **Tests** (`tests.yml`) in two time-balanced shards.
@@ -281,13 +281,15 @@ Scout indexes a model when it's saved; to index existing records, run `php artis
 
 ## Monitoring with Nightwatch
 
-`laravel/nightwatch` is installed and `config/nightwatch.php` is published as Nightwatch ships it, enabled unless `NIGHTWATCH_ENABLED=false`. `.env.example` sets `NIGHTWATCH_ENABLED=false`, so it's off locally. To use it, set:
+`laravel/nightwatch` is installed and `config/nightwatch.php` is published as Nightwatch ships it, enabled unless `NIGHTWATCH_ENABLED=false`. `.env.example` sets `NIGHTWATCH_ENABLED=false`, so it's off locally. To use it, remove that line from `.env` and set:
 
 ```dotenv
 NIGHTWATCH_TOKEN=your-environment-token
 ```
 
 Nightwatch only sends data while its agent runs next to your app, so keep `php artisan nightwatch:agent` running under a process monitor (Laravel Cloud and Forge can do this for you). Laravel Cloud sets `LOG_STACK` itself when Nightwatch is connected; on other hosts, set `LOG_STACK=single,nightwatch` to send logs to Nightwatch too. Nightwatch is disabled in tests through `phpunit.xml`.
+
+By default Nightwatch records every request, command, job, query and exception, logs from `debug` up, and the source code around exceptions. It records request URLs with their query strings and request headers, except those in `redact_headers` (`Authorization`, `Cookie`, `Proxy-Authorization`, `X-CSRF-TOKEN`, `X-XSRF-TOKEN`). It doesn't record request bodies unless `NIGHTWATCH_CAPTURE_REQUEST_PAYLOAD=true`, and then redacts the fields in `redact_payload_fields`. Review this before monitoring an app with personal data; the `NIGHTWATCH_*` variables in `config/nightwatch.php` change the sampling rates, log level, filters and redaction lists. Setting `NIGHTWATCH_REDACT_HEADERS` or `NIGHTWATCH_REDACT_PAYLOAD_FIELDS` replaces a list, so include the defaults.
 
 ## Deploy to Laravel Cloud
 
@@ -316,13 +318,13 @@ php artisan migrate --force
 - **Email:** attach Resend. Cloud sets `RESEND_API_KEY`, `MAIL_MAILER`, `MAIL_FROM_ADDRESS` and `MAIL_FROM_NAME`.
 - **Nightwatch:** click **Connect Nightwatch**, turn on monitoring and enter your token. Cloud sets `NIGHTWATCH_TOKEN` and runs the agent.
 - **Files:** attach a Laravel Object Storage bucket as the default disk for private files (`Storage::put()`). For public files, attach a public bucket with the disk name `public` (`Storage::disk('public')`). Don't pass a `visibility` option.
-- **Queues:** add a managed queue. Cloud sets `QUEUE_CONNECTION=cloud`.
-- **Cache:** attach a Laravel Valkey cache. Cloud sets the `REDIS_*` variables and `CACHE_STORE`.
+- **Cache:** attach a Laravel Valkey cache. Cloud sets the `REDIS_*` variables and `CACHE_STORE`. The cache, sessions and queue default to `redis`, so they all use it.
+- **Queues:** optionally add a managed queue. Cloud sets `QUEUE_CONNECTION=cloud`, and jobs then run on Cloud's queue instead of Valkey.
 - **Search:** Scout needs no resource. Set `SCOUT_DRIVER=database` as a custom variable to search the database instead of the `collection` driver, or see [Adding Typesense](#adding-typesense).
 - **WebSockets:** see [Real-time with Reverb](#real-time-with-reverb).
 - **Scheduler:** turn on **Scheduler** on the App cluster. Use `->onOneServer()` on tasks that must run once when the cluster has more than one replica.
 
-Cloud's startup and readiness health checks use the `/up` route from `bootstrap/app.php`.
+Cloud's startup and readiness health checks use the `/up` route from `bootstrap/app.php`. `AppServiceProvider` makes it fail when the database, the cache store or the session store is unreachable.
 
 **Environment variables** to add yourself, as custom variables or linked secrets:
 
@@ -330,7 +332,7 @@ Cloud's startup and readiness health checks use the `/up` route from `bootstrap/
 APP_NAME="My App"
 ```
 
-Sessions default to `redis`, so attach a Valkey cache, or set `SESSION_DRIVER=database` without one. Optional:
+Without a Valkey cache, set `CACHE_STORE=database`, `SESSION_DRIVER=database` and, without a managed queue, `QUEUE_CONNECTION=database`. Optional:
 
 ```dotenv
 # Fathom Analytics
@@ -341,7 +343,7 @@ NIGHTWATCH_ENABLED=false
 
 If the environment has no `APP_KEY`, add the output of `php artisan key:generate --show` too.
 
-Add only these variables, `SCOUT_DRIVER` and the Typesense variables if you use them, and `BROADCAST_CONNECTION` from [Real-time with Reverb](#real-time-with-reverb). Don't copy your local `.env` into Cloud or push it with `cloud deploy --push-env`: a variable you set replaces the one Cloud sets, so local values such as `DB_USERNAME`, `MAIL_MAILER` and `LOG_STACK` would replace Cloud's database, mail and log settings.
+Add only these variables, those three if you need them, `SCOUT_DRIVER` and the Typesense variables if you use them, and `BROADCAST_CONNECTION` from [Real-time with Reverb](#real-time-with-reverb). Don't copy your local `.env` into Cloud or push it with `cloud deploy --push-env`: a variable you set replaces the one Cloud sets, so local values such as `DB_USERNAME`, `MAIL_MAILER` and `LOG_STACK` would replace Cloud's database, mail and log settings.
 
 **Cloud CLI.** To deploy and manage Cloud from the terminal, and for the `deploying-to-cloud` agent skill, install the [Cloud CLI](https://cloud.laravel.com/docs/api/cli) in the project and run it from `vendor/bin`:
 
@@ -415,7 +417,7 @@ The generated guidelines and skills come from Laravel Boost, Laravel Nightwatch 
 | --- | --- | --- |
 | App (`php artisan serve`) | | app portal |
 | PostgreSQL 18 | the kit's defaults | |
-| Valkey | `CACHE_STORE=redis`, `QUEUE_CONNECTION=redis`; sessions use it by default | |
+| Valkey | the kit's defaults (cache, queue and sessions) | |
 | Mailpit | the kit's defaults (`smtp`, port 1025) | inbox portal |
 | RustFS | `FILESYSTEM_DISK=s3`, bucket `app` | console portal, `orb` / `orb-secret` |
 
