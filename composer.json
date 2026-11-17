@@ -5,7 +5,11 @@
     "description": "Epex's Laravel starter kit: PostgreSQL, Livewire, Flux and a strict quality toolchain.",
     "keywords": [
         "laravel",
-        "framework"
+        "starter-kit",
+        "livewire",
+        "flux",
+        "postgresql",
+        "laravel-cloud"
     ],
     "license": "MIT",
     "require": {
