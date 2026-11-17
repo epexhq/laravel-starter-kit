@@ -10,7 +10,7 @@ A Laravel starter kit: an empty Laravel app on PostgreSQL with Livewire, Flux, a
 | UI | [Flux](https://fluxui.dev) (free), Tailwind CSS 4 | Flux's default theme; layout in `resources/views/layouts/app.blade.php`, welcome page in `resources/views/welcome.blade.php`; see [Livewire](#livewire) and [Upgrading a project to Flux Pro](#upgrading-a-project-to-flux-pro) |
 | Blade performance | [Blaze](https://github.com/livewire/blaze) (`livewire/blaze`) | Folds Blade components into their parent templates; Flux's components use it |
 | Database | PostgreSQL | |
-| Testing | [Pest 5](https://pestphp.com) | Parallel, time-balanced CI shards, an architecture test, and Test Impact Analysis on demand (`composer test:tia`) |
+| Testing | [Pest 5](https://pestphp.com) | Parallel tests, an architecture test, and Test Impact Analysis on demand (`composer test:tia`) |
 | Formatting | [Laravel Pint](https://laravel.com/docs/pint) | `laravel` preset |
 | Refactoring | [Rector](https://getrector.com) + [rector-laravel](https://github.com/driftingly/rector-laravel) + Pest's Rector plugin | See [Rector](#rector) |
 | Static analysis | [Larastan](https://github.com/larastan/larastan) + [larastan-livewire](https://github.com/calebdw/larastan-livewire) + [Pest's PHPStan plugin](https://pestphp.com/docs/phpstan) | `level: max` on the app and `tests/`; see [Static analysis](#static-analysis) |
@@ -108,7 +108,6 @@ composer dev
 - **Parallel:** `composer test` runs `pest --parallel`, one process per CPU core.
 - **Test location:** `phpunit.xml` runs every `*Test.php` file under `tests/`, including unit tests made with `php artisan make:test --unit`.
 - **Test Impact Analysis (TIA):** `composer test:tia` runs Pest's experimental Test Impact Analysis: it re-runs only the tests affected by your changes and replays the rest from cache. The first run records the dependency graph and needs PCOV or Xdebug, and TIA needs a git repository with at least one commit. `tests/Pest.php` names `main` as the default branch that TIA compares against; change it if yours differs. Run `./vendor/bin/pest --parallel --tia --fresh` to re-record the graph. `composer test`, `composer qa` and CI don't use TIA and always run the full suite.
-- **Sharding:** CI splits the suite into two shards (`pest --parallel --shard=N/2`), balanced by the timings in `tests/.pest/shards.json`. The `shards` workflow (`shards.yml`) refreshes them every Monday at 05:00 Asia/Manila when test classes were added, renamed or removed, and pushes the change to `main`; run it from the Actions tab, or run `./vendor/bin/pest --parallel --update-shards` and commit the file, to refresh them sooner. A stale file never skips a test, it only unbalances the shards. Change the shard count in `.github/workflows/tests.yml`.
 - **Architecture test:** `tests/ArchTest.php` fails when a Livewire component isn't a class in `app/Livewire`; see [Livewire](#livewire).
 
 ## Continuous integration
@@ -120,7 +119,7 @@ composer dev
    - On pushes to `main`, on pull requests from forks and on Dependabot's pull requests, it runs in check mode (`rector --dry-run`, `pint --test`, and a comparison of the regenerated `_ide_helper_models.php`) and fails when anything would change. It never commits.
 2. Then, in parallel:
    - **Larastan** (`larastan.yml`) at max level, check only.
-   - **Tests** (`tests.yml`) in two time-balanced shards.
+   - **Tests** (`tests.yml`): the full suite with `pest --parallel`.
    - **Frontend build** (`build.yml`): `npm ci` and `npm run build` on the Node version in `.nvmrc`. It installs the Composer dependencies too, because `resources/css/app.css` imports Flux's CSS from `vendor/`.
 
 All of them install PHP 8.4 with `.github/actions/setup-php`; change the version there. Autofix and the tests start a PostgreSQL 18 container with `.github/actions/setup-database`. CI needs no secrets.

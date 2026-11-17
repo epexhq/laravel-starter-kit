@@ -10,16 +10,11 @@ on:
 
 jobs:
   tests:
-    name: tests (shard ${{ matrix.shard }}/2)
+    name: Tests
     runs-on: ubuntu-latest
 
     permissions:
       contents: read
-
-    strategy:
-      fail-fast: false
-      matrix:
-        shard: [1, 2]
 
     steps:
       - name: Checkout code
@@ -44,8 +39,7 @@ jobs:
           php artisan key:generate
           composer setup:test-database
 
-      # Shards are time-balanced by tests/.pest/shards.json.
       - name: Run tests
         run: |
           git log -1 --format='Testing %H %s'
-          ./vendor/bin/pest --parallel --shard=${{ matrix.shard }}/2
+          ./vendor/bin/pest --parallel
