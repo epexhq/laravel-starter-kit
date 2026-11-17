@@ -88,7 +88,7 @@ composer dev
 | `composer test` | Runs the full suite with `pest --parallel`. |
 | `composer test:tia` | Runs `pest --parallel --tia`, which re-runs only the tests affected by your changes. See [Fast tests](#fast-tests). |
 | `composer ci:check` | The read-only version of `qa`: `rector --dry-run`, `pint --test`, Larastan, tests. |
-| `composer refactor` / `refactor:check` | Rector, applying changes or as a dry run. `refactor` runs Rector twice, because some rules, such as `assertSee($html, false)` to `assertSeeHtml($html)` in a test closure, apply only after another rule changed the file. |
+| `composer refactor` / `refactor:check` | Rector, applying changes or as a dry run. |
 | `composer lint` / `lint:check` | Pint, fixing or checking. |
 | `composer types:check` | Larastan at max level. |
 | `composer ide-helper` | Regenerates `_ide_helper.php`, `.phpstorm.meta.php` and `_ide_helper_models.php`. Needs a migrated database. |
