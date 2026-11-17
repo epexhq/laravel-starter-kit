@@ -1,0 +1,73 @@
+name: shards
+
+# Every Monday at 05:00 Asia/Manila (Sunday 21:00 UTC), refresh the test timings in
+# tests/.pest/shards.json that balance the CI shards, and push them to main. It refreshes them
+# only when the test classes changed since the last refresh, because the timings alone vary on
+# every run. A stale file never skips a test: Pest spreads unknown classes across the shards,
+# which only makes them uneven.
+on:
+  schedule:
+    - cron: '0 21 * * 0'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  shards:
+    name: Refresh Pest shards
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: main
+
+      - name: Setup PHP
+        uses: ./.github/actions/setup-php
+
+      - name: Install Composer dependencies
+        run: composer install --no-interaction --prefer-dist
+
+      # Pest's checksum is the md5 of the sorted test class names, the classes --update-shards times.
+      - name: Check the test classes
+        id: classes
+        run: |
+          classes=$(./vendor/bin/pest --list-tests | grep -oP ' - (?:P\\)?\K[A-Za-z_][\w\\]*(?=::)' | LC_ALL=C sort -u)
+          checksum=$(printf '%s' "$classes" | md5sum | cut -d' ' -f1)
+
+          if [ "$checksum" = "$(jq -r .checksum tests/.pest/shards.json)" ]; then
+            echo "tests/.pest/shards.json already lists every test class."
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Start the database
+        if: steps.classes.outputs.changed == 'true'
+        uses: ./.github/actions/setup-database
+
+      - name: Setup Application
+        if: steps.classes.outputs.changed == 'true'
+        run: |
+          cp .env.example .env
+          php artisan key:generate
+          composer setup:test-database
+
+      # --update-shards writes the file only when the whole suite passes.
+      - name: Update shards
+        if: steps.classes.outputs.changed == 'true'
+        run: ./vendor/bin/pest --parallel --update-shards
+
+      - name: Commit and push
+        if: steps.classes.outputs.changed == 'true'
+        run: |
+          git add tests/.pest/shards.json
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git commit --quiet --message 'Refresh Pest shard timings'
+          git push origin HEAD:refs/heads/main
