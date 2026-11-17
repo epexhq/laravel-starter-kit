@@ -77,7 +77,10 @@
             "Composer\\Config::disableProcessTimeout",
             "@php artisan dev"
         ],
-        "refactor": "rector",
+        "refactor": [
+            "rector",
+            "rector"
+        ],
         "refactor:check": "rector --dry-run",
         "lint": [
             "pint --parallel"
