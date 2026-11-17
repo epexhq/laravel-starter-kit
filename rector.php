@@ -5,6 +5,7 @@ declare(strict_types=1);
 use Pest\Rector\Set\PestSetList;
 use Rector\Config\RectorConfig;
 use Rector\TypeDeclaration\Rector\StmtsAwareInterface\SafeDeclareStrictTypesRector;
+use RectorLaravel\Rector\MethodCall\AssertSeeToAssertSeeHtmlRector;
 use RectorLaravel\Set\LaravelSetList;
 
 return RectorConfig::configure()
@@ -45,4 +46,7 @@ return RectorConfig::configure()
     ->withSkip([
         // Laravel's own code style does not use strict types; adding them to only some files is worse.
         SafeDeclareStrictTypesRector::class,
+        // In a Pest closure without a return type it only applies on a second run, after another
+        // rule adds `: void`, so autofix would leave a change that check mode then rejects.
+        AssertSeeToAssertSeeHtmlRector::class,
     ]);

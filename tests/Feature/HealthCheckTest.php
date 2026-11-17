@@ -1,9 +1,14 @@
 <?php
 
+use Illuminate\Support\Facades\Exceptions;
+
 use function Pest\Laravel\get;
 
 beforeEach(function (): void {
     config(['app.debug' => false]);
+
+    // The health route reports the failure; record it instead of writing it to storage/logs.
+    Exceptions::fake();
 });
 
 afterEach(function (): void {
@@ -19,6 +24,8 @@ test('the health route is down when a service it needs is unreachable', function
     config()->set($config);
 
     get('/up')->assertInternalServerError();
+
+    Exceptions::assertReportedCount(1);
 })->with([
     'database' => [['database.default' => 'unreachable', 'database.connections.unreachable' => ['driver' => 'pgsql', 'host' => '127.0.0.1', 'port' => 1, 'database' => 'laravel']]],
     'cache store' => [['cache.default' => 'database', 'cache.stores.database.table' => 'missing_table']],

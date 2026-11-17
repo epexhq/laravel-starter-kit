@@ -148,6 +148,8 @@ Then run `composer qa`: Rector adds the `render()` return type that Larastan req
 
 The kit has no models. `app/Models` and `database/factories` are empty, so `php artisan make:model Post --migration --factory` creates `App\Models\Post`, its migration and `Database\Factories\PostFactory`. After a migration, run `composer ide-helper` and commit `_ide_helper_models.php`.
 
+Dates are immutable: `AppServiceProvider` calls `Date::use(CarbonImmutable::class)`, so `now()`, the `Date` facade and model date casts return `CarbonImmutable`, and `->addDay()` returns a new instance instead of changing the original.
+
 ## Upgrading a project to Flux Pro
 
 The kit uses free Flux. To use Flux Pro in a project, run:
@@ -281,7 +283,7 @@ Scout indexes a model when it's saved; to index existing records, run `php artis
 
 ## Monitoring with Nightwatch
 
-`laravel/nightwatch` is installed and `config/nightwatch.php` is published as Nightwatch ships it, enabled unless `NIGHTWATCH_ENABLED=false`. `.env.example` sets `NIGHTWATCH_ENABLED=false`, so it's off locally. To use it, remove that line from `.env` and set:
+`laravel/nightwatch` is installed and `config/nightwatch.php` is published as Nightwatch ships it, plus `X-CSRF-TOKEN` and `current_password` in its redaction lists. Nightwatch is enabled unless `NIGHTWATCH_ENABLED=false`. `.env.example` sets `NIGHTWATCH_ENABLED=false`, so it's off locally. To use it, remove that line from `.env` and set:
 
 ```dotenv
 NIGHTWATCH_TOKEN=your-environment-token
@@ -290,6 +292,8 @@ NIGHTWATCH_TOKEN=your-environment-token
 Nightwatch only sends data while its agent runs next to your app, so keep `php artisan nightwatch:agent` running under a process monitor (Laravel Cloud and Forge can do this for you). Laravel Cloud sets `LOG_STACK` itself when Nightwatch is connected; on other hosts, set `LOG_STACK=single,nightwatch` to send logs to Nightwatch too. Nightwatch is disabled in tests through `phpunit.xml`.
 
 By default Nightwatch records every request, command, job, query and exception, logs from `debug` up, and the source code around exceptions. It records request URLs with their query strings and request headers, except those in `redact_headers` (`Authorization`, `Cookie`, `Proxy-Authorization`, `X-CSRF-TOKEN`, `X-XSRF-TOKEN`). It doesn't record request bodies unless `NIGHTWATCH_CAPTURE_REQUEST_PAYLOAD=true`, and then redacts the fields in `redact_payload_fields`. Review this before monitoring an app with personal data; the `NIGHTWATCH_*` variables in `config/nightwatch.php` change the sampling rates, log level, filters and redaction lists. Setting `NIGHTWATCH_REDACT_HEADERS` or `NIGHTWATCH_REDACT_PAYLOAD_FIELDS` replaces a list, so include the defaults.
+
+Query exception messages, which reach logs and Nightwatch, show `?` in place of the bound values: `DB_MASK_BINDINGS` defaults to `true` in `config/database.php`. PostgreSQL's own error text can still quote a value, such as `invalid input syntax for type integer: "…"` or a unique violation's `Key (email)=(…)`.
 
 ## Deploy to Laravel Cloud
 
@@ -312,14 +316,16 @@ php artisan optimize
 php artisan migrate --force
 ```
 
+In production, `AppServiceProvider` refuses `migrate:fresh`, `migrate:refresh`, `migrate:reset`, `migrate:rollback` and `db:wipe` (`DB::prohibitDestructiveCommands()`), so undo a migration with a new one.
+
 **Resources** on the environment's canvas:
 
 - **Database:** a Laravel Serverless Postgres database. Cloud sets the `DB_*` variables.
 - **Email:** attach Resend. Cloud sets `RESEND_API_KEY`, `MAIL_MAILER`, `MAIL_FROM_ADDRESS` and `MAIL_FROM_NAME`.
 - **Nightwatch:** click **Connect Nightwatch**, turn on monitoring and enter your token. Cloud sets `NIGHTWATCH_TOKEN` and runs the agent.
 - **Files:** attach a Laravel Object Storage bucket as the default disk for private files (`Storage::put()`). For public files, attach a public bucket with the disk name `public` (`Storage::disk('public')`). Don't pass a `visibility` option.
-- **Cache:** attach a Laravel Valkey cache. Cloud sets the `REDIS_*` variables and `CACHE_STORE`. The cache, sessions and queue default to `redis`, so they all use it.
-- **Queues:** optionally add a managed queue. Cloud sets `QUEUE_CONNECTION=cloud`, and jobs then run on Cloud's queue instead of Valkey.
+- **Cache:** attach a Laravel Valkey cache. Cloud sets the `REDIS_*` variables and `CACHE_STORE`. The cache, sessions and queue default to `redis`, so they all use it. Pick its eviction policy for that: Cloud recommends `allkeys-lru`, which silently deletes queued jobs and sessions when memory fills. `volatile-lru` deletes only keys with an expiry, so it keeps queued jobs but can still end sessions; `noeviction` deletes nothing, and writes fail when memory is full.
+- **Queues:** to run jobs, add a managed queue. Cloud sets `QUEUE_CONNECTION=cloud`, runs and scales the workers, and jobs then run on Cloud's queue instead of Valkey. To keep jobs on Valkey, add a queue worker background process to the App cluster or to a worker cluster instead; without either, nothing runs queued jobs.
 - **Search:** Scout needs no resource. Set `SCOUT_DRIVER=database` as a custom variable to search the database instead of the `collection` driver, or see [Adding Typesense](#adding-typesense).
 - **WebSockets:** see [Real-time with Reverb](#real-time-with-reverb).
 - **Scheduler:** turn on **Scheduler** on the App cluster. Use `->onOneServer()` on tasks that must run once when the cluster has more than one replica.
